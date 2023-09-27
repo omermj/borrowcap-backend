@@ -23,6 +23,5 @@ const m = {
 };
 
 const result = generateUpdateQuery(d, m);
-console.log(result);
 
 module.exports = { generateUpdateQuery };

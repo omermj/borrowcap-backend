@@ -22,4 +22,16 @@ class BadRequestError extends ExpressError {
   }
 }
 
-module.exports = { ExpressError, NotFoundError, BadRequestError };
+/** 401 UNAUTHORIZED REQUEST error */
+class UnauthorizedError extends ExpressError {
+  constructor(message = "Unauthorized Request") {
+    super(message, 401);
+  }
+}
+
+module.exports = {
+  ExpressError,
+  NotFoundError,
+  BadRequestError,
+  UnauthorizedError,
+};

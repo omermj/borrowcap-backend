@@ -6,7 +6,9 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const userRoutes = require("./routes/users");
+const authRoutes = require("./routes/auth");
 const { ExpressError, NotFoundError } = require("./expressError");
+const { authenticateJWT } = require("./middleware/auth");
 
 const app = express();
 
@@ -14,9 +16,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(morgan("tiny"));
+app.use(authenticateJWT); // this middleware looks for a token in the req header
+// and if it finds it, it passes the signed user details to the next middeware
 
 // routes
 app.use("/users", userRoutes);
+app.use("/auth", authRoutes);
 
 /** Handle 404 errors */
 app.use(function (req, res, next) {

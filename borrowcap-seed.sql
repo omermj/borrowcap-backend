@@ -5,3 +5,10 @@ VALUES
   ('testuser3', 'testpass3', 'Test3', 'User3', 'test3@user.com', 70000),
   ('testuser4', 'testpass4', 'Test4', 'User4', 'test4@user.com', 90000),
   ('testuser5', 'testpass5', 'Test5', 'User5', 'test5@user.com', 100000);
+
+
+INSERT INTO roles (name, description)
+VALUES
+  ('admin', 'Admin role'),
+  ('investor', 'Investor'),
+  ('borrower', 'Borrower');

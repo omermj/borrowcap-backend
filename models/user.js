@@ -5,26 +5,35 @@ const {
   NotFoundError,
   ExpressError,
   BadRequestError,
+  UnauthorizedError,
 } = require("../expressError");
+const bcrypt = require("bcrypt");
+
 const { generateUpdateQuery } = require("../helpers/sql");
+const { BCRYPT_WORK_FACTOR } = require("../config");
+
+const Role = require("./role");
 
 /** User Model */
 
 class User {
-  /** Register user with data { username, password, firstName, lastName, email,
+  /** Add user with data { username, password, firstName, lastName, email,
    *  accountBalance }
    *
-   * Returns { username, firstName, lastName, email, accountBalance }
+   * Returns { username, firstName, lastName, email, accountBalance, roles }
+   *
+   * where role is an array of allowed roles
    *
    * Throws BadRequestError on duplicates
    *  */
-  static async register({
+  static async add({
     username,
     password,
     firstName,
     lastName,
     email,
     accountBalance,
+    roles,
   }) {
     // Check for duplicates
     const duplicateCheck = await db.query(
@@ -36,7 +45,17 @@ class User {
     if (duplicateCheck.rows[0])
       throw new BadRequestError(`Duplicate username: ${username}`);
 
-    const result = await db.query(
+    // check if role exists
+    const rolesObj = await Role.getAll();
+    if (!Array.isArray(roles) || !roles.every((role) => role in rolesObj)) {
+      throw new BadRequestError("Incorrect role(s).");
+    }
+
+    // hash password
+    const hashedPwd = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
+
+    // create entry in user table
+    const resultUser = await db.query(
       `INSERT INTO users
         (username,
          password,
@@ -46,16 +65,21 @@ class User {
          account_balance)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING
+          id,
           username,
           first_name AS "firstName",
           last_name AS "lastName",
           email,
           account_balance AS "accountBalance"
       `,
-      [username, password, firstName, lastName, email, accountBalance]
+      [username, hashedPwd, firstName, lastName, email, accountBalance]
     );
-    const user = result.rows[0];
-    return user;
+    const user = resultUser.rows[0];
+
+    // assign role to user
+    const userWithRoles = await User.assignRoles(user, roles);
+
+    return userWithRoles;
   }
 
   /**
@@ -75,6 +99,7 @@ class User {
       ORDER BY username
       `
     );
+
     return result.rows;
   }
 
@@ -98,7 +123,11 @@ class User {
     );
     const user = result.rows[0];
     if (!user) throw new NotFoundError(`No user with username: ${username}`);
-    return user;
+
+    // get roles from database
+    const roles = await User.getRoles(user.username);
+
+    return { ...user, roles };
   }
 
   /**
@@ -119,8 +148,18 @@ class User {
     if (!user) throw new NotFoundError(`No user: ${username}`);
   }
 
+  /**
+   * Update a given user in database.
+   * @param {username}
+   * @returns {user}
+   * @throws {NotFoundError} if username does not exist
+   */
   static async update(username, data) {
     // handle password update
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, BCRYPT_WORK_FACTOR);
+    }
+
     // generate SQL query
     const { cols, values } = generateUpdateQuery(data, {
       firstName: "first_name",
@@ -147,6 +186,71 @@ class User {
     const user = result.rows[0];
     if (!user) throw new NotFoundError(`No user: ${username}`);
     return user;
+  }
+
+  /** Authenticates user using username and password provided */
+
+  static async authenticate(username, password) {
+    // get user
+    const result = await db.query(
+      `SELECT username,
+        password,
+        first_name AS firstName,
+        last_name AS lastName,
+        email,
+        account_balance AS accountBALANCE
+      FROM users
+      WHERE username = $1`,
+      [username]
+    );
+    const user = result.rows[0];
+
+    // check password
+    if (user) {
+      const isValid = await bcrypt.compare(password, user.password);
+      if (isValid) {
+        delete user.password;
+
+        // get roles from database
+        const roles = await User.getRoles(user.username);
+        return { ...user, roles };
+      }
+    }
+    throw new UnauthorizedError("Invalid username/password");
+  }
+
+  static async assignRoles(user, roles) {
+    // get roles from database
+    const rolesObj = await Role.getAll();
+
+    // create entry in users_roles table
+    try {
+      for (let role of roles) {
+        await db.query(
+          `
+        INSERT INTO users_roles
+          (user_id, role_id)
+        VALUES ($1, $2)`,
+          [user.id, rolesObj[role]]
+        );
+      }
+      return { ...user, roles };
+    } catch (e) {
+      throw new ExpressError(e.message);
+    }
+  }
+
+  static async getRoles(username) {
+    const result = await db.query(
+      `
+      SELECT name FROM roles
+      JOIN users_roles ON roles.id = users_roles.role_id
+      JOIN users ON users.id = users_roles.user_id
+      WHERE users.username = $1
+    `,
+      [username]
+    );
+    return result.rows.map((role) => role.name);
   }
 }
 
