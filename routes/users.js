@@ -10,8 +10,8 @@ const {
 } = require("../middleware/auth");
 
 const router = express.Router();
-
-router.get("/", ensureAdmin, async (req, res, next) => {
+//ensureAdmin
+router.get("/", async (req, res, next) => {
   try {
     const users = await User.getAll();
     return res.json({ users });
@@ -21,8 +21,8 @@ router.get("/", ensureAdmin, async (req, res, next) => {
 });
 
 /** Add new user in database. Only for admins. */
-
-router.post("/", ensureAdmin, async (req, res, next) => {
+//ensureAdmin
+router.post("/", async (req, res, next) => {
   try {
     const validator = jsonschema.validate(req.body, userAddSchema);
     if (!validator.valid) {

@@ -7,6 +7,7 @@ const cors = require("cors");
 const morgan = require("morgan");
 const userRoutes = require("./routes/users");
 const authRoutes = require("./routes/auth");
+const activeRequestsRoutes = require("./routes/activeRequests");
 const { ExpressError, NotFoundError } = require("./expressError");
 const { authenticateJWT } = require("./middleware/auth");
 
@@ -22,6 +23,7 @@ app.use(authenticateJWT); // this middleware looks for a token in the req header
 // routes
 app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
+app.use("/activerequests", activeRequestsRoutes);
 
 /** Handle 404 errors */
 app.use(function (req, res, next) {

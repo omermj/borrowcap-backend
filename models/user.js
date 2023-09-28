@@ -112,7 +112,8 @@ class User {
 
   static async get(username) {
     const result = await db.query(
-      `SELECT username,
+      `SELECT id, 
+      username,
       first_name AS firstName,
       last_name AS lastName,
       email,
@@ -125,7 +126,7 @@ class User {
     if (!user) throw new NotFoundError(`No user with username: ${username}`);
 
     // get roles from database
-    const roles = await User.getRoles(user.username);
+    const roles = await User.getRoles(user.id);
 
     return { ...user, roles };
   }
@@ -193,7 +194,8 @@ class User {
   static async authenticate(username, password) {
     // get user
     const result = await db.query(
-      `SELECT username,
+      `SELECT id,
+        username,
         password,
         first_name AS firstName,
         last_name AS lastName,
@@ -212,7 +214,7 @@ class User {
         delete user.password;
 
         // get roles from database
-        const roles = await User.getRoles(user.username);
+        const roles = await User.getRoles(user.id);
         return { ...user, roles };
       }
     }
@@ -240,15 +242,14 @@ class User {
     }
   }
 
-  static async getRoles(username) {
+  static async getRoles(userId) {
     const result = await db.query(
       `
       SELECT name FROM roles
       JOIN users_roles ON roles.id = users_roles.role_id
-      JOIN users ON users.id = users_roles.user_id
-      WHERE users.username = $1
+      WHERE users_roles.user_id = $1
     `,
-      [username]
+      [userId]
     );
     return result.rows.map((role) => role.name);
   }

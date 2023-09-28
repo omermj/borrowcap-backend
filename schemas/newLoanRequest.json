@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "http://example.com/example.json",
+  "type": "object",
+  "title": "New Loan Application Schema",
+  "required": [
+    "borrowerId",
+    "amtRequested",
+    "purposeId",
+    "income",
+    "otherDebt",
+    "durationMonths"
+  ],
+  "properties": {
+    "borrowerId": {
+      "type": "integer"
+    },
+    "amtRequested": {
+      "type": "number",
+      "minimum": 1
+    },
+    "purposeId": {
+      "type": "integer"
+    },
+    "income": {
+      "type": "number",
+      "minimum": 1
+    },
+    "otherDebt": {
+      "type": "number",
+      "minimum": 1
+    },
+    "durationMonths": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}
