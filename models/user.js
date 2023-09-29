@@ -221,6 +221,8 @@ class User {
     throw new UnauthorizedError("Invalid username/password");
   }
 
+  /** Assign roles to given user */
+
   static async assignRoles(user, roles) {
     // get roles from database
     const rolesObj = await Role.getAll();
@@ -241,6 +243,8 @@ class User {
       throw new ExpressError(e.message);
     }
   }
+
+  // Get roles assigned to user given userId
 
   static async getRoles(userId) {
     const result = await db.query(

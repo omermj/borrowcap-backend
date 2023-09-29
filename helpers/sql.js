@@ -22,6 +22,5 @@ const m = {
   accountBalance: "account_balance",
 };
 
-const result = generateUpdateQuery(d, m);
 
 module.exports = { generateUpdateQuery };

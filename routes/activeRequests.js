@@ -5,6 +5,8 @@
 const express = require("express");
 const jsonschema = require("jsonschema");
 const newLoanSchema = require("../schemas/newLoanRequest.json");
+const updateLoanSchema = require("../schemas/updateLoanRequest.json");
+const approveLoanSchema = require("../schemas/approveLoanRequest.json");
 const { BadRequestError } = require("../expressError");
 const ActiveRequest = require("../models/activeRequest");
 const User = require("../models/user");
@@ -21,6 +23,8 @@ router.get("/", async (req, res, next) => {
     return next(e);
   }
 });
+
+/** Create new loan request */
 
 router.post("/", async (req, res, next) => {
   try {
@@ -41,5 +45,70 @@ router.post("/", async (req, res, next) => {
     return next(e);
   }
 });
+
+/** Given id, return loan request data */
+router.get("/:id", async (req, res, next) => {
+  try {
+    const activeRequest = await ActiveRequest.get(req.params.id);
+    return res.json({ activeRequest });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+/** Update loan request */
+router.patch("/:id", async (req, res, next) => {
+  try {
+    // validate req.body
+    const validator = jsonschema.validate(req.body, updateLoanSchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map((e) => e.stack);
+      throw new BadRequestError(errs);
+    }
+    const activeRequest = await ActiveRequest.update(req.params.id, req.body);
+    return res.json({ activeRequest });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+/** Delete loan request */
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const result = ActiveRequest.delete(req.params.id);
+    if (result) {
+      return res.json({
+        message: `Deleted Active Request with id: ${req.params.id}`,
+      });
+    }
+  } catch (e) {
+    return next(e);
+  }
+});
+
+/** Approve loan request */
+
+// Interest rate is calculated
+// Approval amount is decided
+// App is moved from Active Request table to Approved Requests table
+router.patch("/:id/approve", async (req, res, next) => {
+  try {
+    // validate JSON request data (interest rate and approved amt)
+    const validator = jsonschema.validate(req.body, approveLoanSchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map((e) => e.stack);
+      throw new BadRequestError(errs);
+    }
+    const approvedRequest = await ActiveRequest.approve(
+      req.params.id,
+      req.body
+    );
+    return res.status(201).json({ approvedRequest });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+/** Reject loan request */
 
 module.exports = router;
