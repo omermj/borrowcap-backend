@@ -8,7 +8,7 @@ const {
   BadRequestError,
   UnauthorizedError,
 } = require("../expressError");
-const app = require("../app");
+const { FUNDING_DAYS } = require("../config");
 
 /** Database Model: Active Loan Requests */
 
@@ -20,7 +20,7 @@ class ActiveRequest {
     purposeId,
     income,
     otherDebt,
-    durationMonths,
+    term,
   }) {
     // Get date
     const date = new Date().toUTCString();
@@ -29,11 +29,7 @@ class ActiveRequest {
     const interestRate = 0.089;
 
     // Calculate installment amount
-    const pmt = this.calculatePayment(
-      amtRequested,
-      interestRate / 12,
-      durationMonths
-    );
+    const pmt = this.calculatePayment(amtRequested, interestRate / 12, term);
 
     const result = await db.query(
       `
@@ -45,20 +41,20 @@ class ActiveRequest {
         other_debt,
         app_open_date,
         interest_rate,
-        duration_months,
+        term,
         installment_amt)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING
         id,
-        borrower_id AS borrowerId,
-        amt_requested AS amtRequested,
-        purpose_id AS purposeId,
+        borrower_id AS "borrowerId",
+        amt_requested AS "amtRequested",
+        purpose_id AS "purposeId",
         income,
-        other_debt AS otherDebt,
-        app_open_date AS appOpenDate,
-        interest_rate AS interestRate,
-        duration_months AS durationMonths,
-        installment_amt AS installmentAmt
+        other_debt AS "otherDebt",
+        app_open_date AS "appOpenDate",
+        interest_rate AS "interestRate",
+        term,
+        installment_amt AS "installmentAmt"
     `,
       [
         borrowerId,
@@ -68,7 +64,7 @@ class ActiveRequest {
         otherDebt,
         date,
         interestRate,
-        durationMonths,
+        term,
         pmt,
       ]
     );
@@ -82,15 +78,15 @@ class ActiveRequest {
     const result = await db.query(`
       SELECT 
         id,
-        borrower_id AS borrowerId,
-        amt_requested AS amtRequested,
-        purpose_id AS purposeId,
+        borrower_id AS "borrowerId",
+        amt_requested AS "amtRequested",
+        purpose_id AS "purposeId",
         income,
-        other_debt AS otherDebt,
-        app_open_date AS appOpenDate,
-        interest_rate AS interestRate,
-        duration_months as durationMonths,
-        installment_amt as installmentAmt
+        other_debt AS "otherDebt",
+        app_open_date AS "appOpenDate",
+        interest_rate AS "interestRate",
+        term,
+        installment_amt as "installmentAmt"
       FROM active_requests`);
     return result.rows;
   }
@@ -102,15 +98,15 @@ class ActiveRequest {
       `
     SELECT 
       id,
-      borrower_id AS borrowerId,
-      amt_requested AS amtRequested,
-      purpose_id AS purposeId,
+      borrower_id AS "borrowerId",
+      amt_requested AS "amtRequested",
+      purpose_id AS "purposeId",
       income,
-      other_debt AS otherDebt,
-      app_open_date AS appOpenDate,
-      interest_rate AS interestRate,
-      duration_months as durationMonths,
-      installment_amt as installmentAmt
+      other_debt AS "otherDebt",
+      app_open_date AS "appOpenDate",
+      interest_rate AS "interestRate",
+      term,
+      installment_amt as "installmentAmt"
     FROM active_requests
     WHERE id = $1
     `,
@@ -124,7 +120,7 @@ class ActiveRequest {
 
   /** Update Active Request, given id and data
    * Fields allowed to be updated: amt_requested, purpose_id, income,
-   * other_debt, interest_rate, duration_months
+   * other_debt, interest_rate, term
    */
 
   static async update(id, data) {
@@ -134,7 +130,6 @@ class ActiveRequest {
       purposeId: "purpose_id",
       otherDebt: "other_debt",
       interestRate: "interest_rate",
-      durationMonths: "duration_months",
     });
 
     const sqlQuery = `
@@ -143,15 +138,15 @@ class ActiveRequest {
       WHERE id = $${values.length + 1}
       RETURNING
         id,
-        borrower_id AS borrowerId,
-        amt_requested AS amtRequested,
-        purpose_id AS purposeId,
+        borrower_id AS "borrowerId",
+        amt_requested AS "amtRequested",
+        purpose_id AS "purposeId",
         income,
-        other_debt AS otherDebt,
-        app_open_date AS appOpenDate,
-        interest_rate AS interestRate,
-        duration_months AS durationMonths,
-        installment_amt AS installmentAmt
+        other_debt AS "otherDebt",
+        app_open_date AS "appOpenDate",
+        interest_rate AS "interestRate",
+        term,
+        installment_amt AS "installmentAmt"
     `;
 
     const result = await db.query(sqlQuery, [...values, id]);
@@ -182,17 +177,18 @@ class ActiveRequest {
 
   //** Approve Active Request */
   static async approve(id, data) {
-    const { interestRate, amtApproved, durationMonths } = data;
+    const { interestRate, amtApproved, term } = data;
 
-    // Get date
-    const date = new Date().toUTCString();
+    // Get approval date
+    const approvalDate = new Date().toUTCString();
+
+    // get funding deadline
+    const fundingDeadline = this.getFundingDeadline(approvalDate, FUNDING_DAYS);
 
     // Calculate installment amount
-    const pmt = this.calculatePayment(
-      amtApproved,
-      interestRate / 12,
-      durationMonths
-    );
+    const pmt = this.calculatePayment(amtApproved, interestRate / 12, term);
+
+    const activeRequest = await ActiveRequest.get(id);
 
     const result = await db.query(
       `
@@ -201,47 +197,58 @@ class ActiveRequest {
           borrower_id,
           amt_requested,
           amt_approved,
+          amt_funded,
           purpose_id,
           income,
           other_debt,
           app_open_date,
           app_approved_date,
+          funding_deadline,
           interest_rate,
-          duration_months,
-          installment_amt)
-      SELECT
-        id,
-          borrower_id,
-          amt_requested,
-          $2,
-          purpose_id,
-          income,
-          other_debt,
-          app_open_date,
-          $3,
-          $4,
-          duration_months,
-          $5
-        FROM active_requests
-        WHERE id = $1
+          term,
+          installment_amt,
+          available_for_funding,
+          is_funded)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING
           id,
-          borrower_id AS borrowerId,
-          amt_requested AS amtRequested,
-          amt_approved AS amtApproved,
-          purpose_id AS purposeId,
+          borrower_id AS "borrowerId",
+          amt_requested AS "amtRequested",
+          amt_approved AS "amtApproved",
+          amt_funded AS "amtFunded",
+          purpose_id AS "purposeId",
           income,
-          other_debt AS otherDebt,
-          app_open_date AS appOpenDate,
-          app_approved_date AS appApprovedDate,
-          interest_rate AS interestRate,
-          duration_months AS durationMonths,
-          installment_amt AS installmentAmt
+          other_debt AS "otherDebt",
+          app_open_date AS "appOpenDate",
+          app_approved_date AS "appApprovedDate",
+          funding_deadline AS "fundingDeadline",
+          interest_rate AS "interestRate",
+          term,
+          installment_amt AS "installmentAmt",
+          available_for_funding AS "availableForFunding",
+          is_funded AS "isFunded"
     `,
-      [id, amtApproved, date, interestRate, pmt]
+      [
+        activeRequest.id,
+        activeRequest.borrowerId,
+        activeRequest.amtRequested,
+        amtApproved,
+        0,
+        activeRequest.purposeId,
+        activeRequest.income,
+        activeRequest.otherDebt,
+        activeRequest.appOpenDate,
+        approvalDate,
+        fundingDeadline,
+        interestRate,
+        term,
+        pmt,
+        false,
+        false,
+      ]
     );
     const approvedRequest = result.rows[0];
-    console.log(approvedRequest);
+
     if (!approvedRequest)
       throw new BadRequestError(`No Active Request exists with id: ${id}`);
     return approvedRequest;
@@ -249,6 +256,12 @@ class ActiveRequest {
 
   static calculatePayment(pv, r, n) {
     return ((pv * r) / (1 - (1 + r) ** -n)).toFixed(2);
+  }
+
+  static getFundingDeadline(approvalDate, days) {
+    const fundingDeadline = new Date(approvalDate);
+    fundingDeadline.setDate(fundingDeadline.getDate() + days);
+    return fundingDeadline.toUTCString();
   }
 }
 

@@ -9,7 +9,7 @@
     "purposeId",
     "income",
     "otherDebt",
-    "durationMonths"
+    "term"
   ],
   "properties": {
     "borrowerId": {
@@ -30,7 +30,7 @@
       "type": "number",
       "minimum": 1
     },
-    "durationMonths": {
+    "term": {
       "type": "integer",
       "minimum": 1
     }

@@ -3,7 +3,7 @@
   "$id": "http://example.com/example.json",
   "type": "object",
   "title": "Approve Loan Application Schema",
-  "required": ["amtApproved", "interestRate", "durationMonths"],
+  "required": ["amtApproved", "interestRate", "term"],
   "properties": {
     "amtApproved": {
       "type": "number",
@@ -13,7 +13,7 @@
       "type": "number",
       "minimum": 0.0001
     },
-    "durationMonths": {
+    "term": {
       "type": "integer",
       "minimum": 1
     }

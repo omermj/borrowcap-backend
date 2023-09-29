@@ -21,3 +21,14 @@ VALUES
 INSERT INTO purpose (title)
 VALUES 
   ('home'), ('car'), ('education'), ('business'), ('medical'), ('other');
+
+INSERT INTO cancellation_reasons (title)
+VALUES 
+  ('unmet_criteria'), ('unfunded'), ('user_initiated');
+
+-- FEED ACTIVE REQUESTS
+INSERT INTO active_requests (borrower_id, amt_requested, purpose_id, income,
+  other_debt, app_open_date, interest_rate, term, installment_amt)
+  VALUES
+  (1, 5000, 2, 80000, 2000, '2023/09/27', 0.084, 24, 226.14),
+  (1, 10000, 3, 90000, 3000, '2023/09/28', 0.094, 36, 319.86);

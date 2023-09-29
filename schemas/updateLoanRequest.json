@@ -8,7 +8,7 @@
     "purposeId",
     "income",
     "otherDebt",
-    "durationMonths"
+    "term"
   ],
   "properties": {
     "amtRequested": {
@@ -30,7 +30,7 @@
       "type": "number",
       "minimum": 0.0001
     },
-    "durationMonths": {
+    "term": {
       "type": "integer",
       "minimum": 1
     }
