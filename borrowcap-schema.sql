@@ -79,7 +79,7 @@ CREATE TABLE cancelled_requests (
   app_open_date TIMESTAMP NOT NULL,
   app_approved_date TIMESTAMP,
   app_cancelled_date TIMESTAMP NOT NULL,
-  funding_deadline TIMESTAMP NOT NULL,
+  funding_deadline TIMESTAMP,
   interest_rate NUMERIC NOT NULL,
   term INTEGER NOT NULL,
   installment_amt NUMERIC NOT NULL,

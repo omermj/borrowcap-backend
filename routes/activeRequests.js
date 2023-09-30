@@ -14,7 +14,6 @@ const User = require("../models/user");
 const router = express.Router();
 
 /** Get all loans */
-
 router.get("/", async (req, res, next) => {
   try {
     const loanRequests = await ActiveRequest.getAll();
@@ -25,7 +24,6 @@ router.get("/", async (req, res, next) => {
 });
 
 /** Create new loan request */
-
 router.post("/", async (req, res, next) => {
   try {
     // validate req.body
@@ -87,10 +85,6 @@ router.delete("/:id", async (req, res, next) => {
 });
 
 /** Approve loan request */
-
-// Interest rate is calculated
-// Approval amount is decided
-// App is moved from Active Request table to Approved Requests table
 router.patch("/:id/approve", async (req, res, next) => {
   try {
     // validate JSON request data (interest rate and approved amt)
@@ -110,5 +104,15 @@ router.patch("/:id/approve", async (req, res, next) => {
 });
 
 /** Reject loan request */
+router.patch("/:id/reject", async (req, res, next) => {
+  try {
+    const rejectedRequest = await ActiveRequest.reject(req.params.id);
+    if (rejectedRequest)
+      return res.json({ message: "Active Request is rejected." });
+    else return res.json({ message: "Approved Request was not rejected." });
+  } catch (e) {
+    return next(e);
+  }
+});
 
 module.exports = router;

@@ -9,11 +9,14 @@ const {
   UnauthorizedError,
 } = require("../expressError");
 const { FUNDING_DAYS } = require("../config");
+const CancelledRequest = require("./cancelledRequest");
+const CancellationReason = require("./cancellationReason");
+const ApprovedRequest = require("./approvedRequest");
 
 /** Database Model: Active Loan Requests */
 
 class ActiveRequest {
-  /** Create Loan Request */
+  /** Create Active Request */
   static async create({
     borrowerId,
     amtRequested,
@@ -177,80 +180,45 @@ class ActiveRequest {
 
   //** Approve Active Request */
   static async approve(id, data) {
+    const activeRequest = await ActiveRequest.get(id);
+    console.log(activeRequest);
+
     const { interestRate, amtApproved, term } = data;
 
     // Get approval date
-    const approvalDate = new Date().toUTCString();
+    const appApprovedDate = new Date().toUTCString();
 
     // get funding deadline
-    const fundingDeadline = this.getFundingDeadline(approvalDate, FUNDING_DAYS);
+    const fundingDeadline = this.getFundingDeadline(
+      appApprovedDate,
+      FUNDING_DAYS
+    );
 
     // Calculate installment amount
     const pmt = this.calculatePayment(amtApproved, interestRate / 12, term);
 
-    const activeRequest = await ActiveRequest.get(id);
+    // Get active request from database
 
-    const result = await db.query(
-      `
-      INSERT INTO approved_requests
-        (id,
-          borrower_id,
-          amt_requested,
-          amt_approved,
-          amt_funded,
-          purpose_id,
-          income,
-          other_debt,
-          app_open_date,
-          app_approved_date,
-          funding_deadline,
-          interest_rate,
-          term,
-          installment_amt,
-          available_for_funding,
-          is_funded)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-        RETURNING
-          id,
-          borrower_id AS "borrowerId",
-          amt_requested AS "amtRequested",
-          amt_approved AS "amtApproved",
-          amt_funded AS "amtFunded",
-          purpose_id AS "purposeId",
-          income,
-          other_debt AS "otherDebt",
-          app_open_date AS "appOpenDate",
-          app_approved_date AS "appApprovedDate",
-          funding_deadline AS "fundingDeadline",
-          interest_rate AS "interestRate",
-          term,
-          installment_amt AS "installmentAmt",
-          available_for_funding AS "availableForFunding",
-          is_funded AS "isFunded"
-    `,
-      [
-        activeRequest.id,
-        activeRequest.borrowerId,
-        activeRequest.amtRequested,
-        amtApproved,
-        0,
-        activeRequest.purposeId,
-        activeRequest.income,
-        activeRequest.otherDebt,
-        activeRequest.appOpenDate,
-        approvalDate,
-        fundingDeadline,
-        interestRate,
-        term,
-        pmt,
-        false,
-        false,
-      ]
-    );
-    const approvedRequest = result.rows[0];
+    activeRequest.interestRate = interestRate;
+    activeRequest.term = term;
+    activeRequest.installmentAmt = pmt;
+
+    const approvedRequest = await ApprovedRequest.create({
+      ...activeRequest,
+      amtApproved,
+      amtFunded: 0,
+      appApprovedDate,
+      fundingDeadline,
+      availableForFunding: false,
+      isFunded: false,
+    });
 
     if (!approvedRequest)
       throw new BadRequestError(`No Active Request exists with id: ${id}`);
+
+    // Remove Active Request from active_request table
+    ActiveRequest.delete(id);
+
     return approvedRequest;
   }
 
@@ -262,6 +230,36 @@ class ActiveRequest {
     const fundingDeadline = new Date(approvalDate);
     fundingDeadline.setDate(fundingDeadline.getDate() + days);
     return fundingDeadline.toUTCString();
+  }
+
+  /** Reject Active Request */
+  static async reject(id) {
+    // Retrive app from database
+    const activeRequest = await ActiveRequest.get(id);
+
+    // Get date
+    const date = new Date().toUTCString();
+
+    // Retrieve cancellationReasonId
+    const cancellationReasons = await CancellationReason.getAll();
+    const cancellationReasonId = cancellationReasons["unmet_criteria"];
+
+    // Create entry in cancelled_requests table
+    const cancelledApp = await CancelledRequest.create({
+      ...activeRequest,
+      amtApproved: 0,
+      appApprovedDate: null,
+      appCancelledDate: date,
+      fundingDeadline: null,
+      wasApproved: false,
+      cancellationReasonId,
+    });
+
+    // Delete active request from active_requests table
+    if (cancelledApp) {
+      ActiveRequest.delete(id);
+      return true;
+    } else return false;
   }
 }
 
