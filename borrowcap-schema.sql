@@ -58,9 +58,17 @@ CREATE TABLE approved_requests (
   term INTEGER NOT NULL,
   installment_amt NUMERIC NOT NULL,
   available_for_funding BOOLEAN NOT NULL,
-  is_funded BOOLEAN NOT NULL,
+  is_funded BOOLEAN NOT NULL, -- when app is fully funded, this becomes true
   FOREIGN KEY (purpose_id) REFERENCES purpose (id) ON DELETE CASCADE,
   FOREIGN KEY (borrower_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE TABLE approved_requests_investors (
+  request_id INTEGER,
+  investor_id INTEGER,
+  PRIMARY KEY (request_id, investor_id),
+  FOREIGN KEY (request_id) REFERENCES approved_requests (id) ON DELETE CASCADE,
+  FOREIGN KEY (investor_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE cancellation_reasons (
@@ -88,4 +96,18 @@ CREATE TABLE cancelled_requests (
   FOREIGN KEY (purpose_id) REFERENCES purpose (id) ON DELETE SET NULL,
   FOREIGN KEY (cancellation_reason_id) REFERENCES cancellation_reasons (id) ON DELETE SET NULL,
   FOREIGN KEY (borrower_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE TABLE funded_loans (
+  id SERIAL PRIMARY KEY,
+  app_id INTEGER,
+  borrower_id INTEGER,
+  amt_funded NUMERIC NOT NULL,
+  funded_date TIMESTAMP NOT NULL,
+  interest_rate NUMERIC NOT NULL,
+  term INTEGER NOT NULL,
+  installment_amt NUMERIC NOT NULL,
+  remaining_balance NUMERIC NOT NULL,
+  FOREIGN KEY (app_id) REFERENCES approved_requests (id) ON DELETE SET NULL,
+  FOREIGN KEY (borrower_id) REFERENCES users (id) ON DELETE SET NULL
 );

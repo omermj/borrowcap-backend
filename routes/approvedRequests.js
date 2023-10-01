@@ -4,9 +4,10 @@
 
 const express = require("express");
 const jsonschema = require("jsonschema");
-const { BadRequestError } = require("../expressError");
+const { BadRequestError, NotFoundError } = require("../expressError");
 const ApprovedRequest = require("../models/approvedRequest");
 const User = require("../models/user");
+const app = require("../app");
 
 const router = express.Router();
 
@@ -47,6 +48,24 @@ router.patch("/:id/enablefunding", async (req, res, next) => {
   try {
     const result = await ApprovedRequest.enableFunding(req.params.id);
     return res.json({ message: "Funding enabled." });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+router.patch("/:id/fund", async (req, res, next) => {
+  try {
+    if (!req.body.amount)
+      throw new BadRequestError("No amount provided as part of request body");
+    const approvedRequest = await ApprovedRequest.fund(
+      req.params.id,
+      req.body.amount
+    );
+    if (!approvedRequest)
+      throw new NotFoundError(
+        `Approved Request with id ${req.params.id} does not exist.`
+      );
+    return res.json({ approvedRequest });
   } catch (e) {
     return next(e);
   }
