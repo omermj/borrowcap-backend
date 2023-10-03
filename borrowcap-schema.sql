@@ -33,12 +33,12 @@ CREATE TABLE active_requests (
   id SERIAL PRIMARY KEY,
   borrower_id INTEGER NOT NULL,
   amt_requested NUMERIC NOT NULL,
-  purpose_id INTEGER NOT NULL,
+  purpose_id INTEGER,
   app_open_date TIMESTAMP NOT NULL,
   interest_rate NUMERIC NOT NULL,
   term INTEGER NOT NULL,
   installment_amt NUMERIC NOT NULL,
-  FOREIGN KEY (purpose_id) REFERENCES purpose (id) ON DELETE CASCADE,
+  FOREIGN KEY (purpose_id) REFERENCES purpose (id) ON DELETE SET NULL,
   FOREIGN KEY (borrower_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
@@ -48,7 +48,7 @@ CREATE TABLE approved_requests (
   amt_requested NUMERIC NOT NULL,
   amt_approved NUMERIC NOT NULL,
   amt_funded NUMERIC NOT NULL,
-  purpose_id INTEGER NOT NULL,
+  purpose_id INTEGER,
   app_open_date TIMESTAMP NOT NULL,
   app_approved_date TIMESTAMP NOT NULL,
   funding_deadline TIMESTAMP NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE approved_requests (
   installment_amt NUMERIC NOT NULL,
   available_for_funding BOOLEAN NOT NULL,
   is_funded BOOLEAN NOT NULL, -- when app is fully funded, this becomes true
-  FOREIGN KEY (purpose_id) REFERENCES purpose (id) ON DELETE CASCADE,
+  FOREIGN KEY (purpose_id) REFERENCES purpose (id) ON DELETE SET NULL,
   FOREIGN KEY (borrower_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
