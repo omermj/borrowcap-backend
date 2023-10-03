@@ -59,15 +59,17 @@ class ActiveRequest {
   static async getAll() {
     const result = await db.query(`
       SELECT 
-        id,
-        borrower_id AS "borrowerId",
-        amt_requested AS "amtRequested",
-        purpose_id AS "purposeId",
-        app_open_date AS "appOpenDate",
-        interest_rate AS "interestRate",
-        term,
-        installment_amt as "installmentAmt"
-      FROM active_requests`);
+        r.id,
+        r.borrower_id AS "borrowerId",
+        r.amt_requested AS "amtRequested",
+        p.title AS "purpose",
+        r.app_open_date AS "appOpenDate",
+        r.interest_rate AS "interestRate",
+        r.term,
+        r.installment_amt as "installmentAmt"
+      FROM active_requests AS "r"
+      JOIN purpose AS "p" ON p.id = r.purpose_id
+      `);
     return result.rows;
   }
 
@@ -77,16 +79,17 @@ class ActiveRequest {
     const result = await db.query(
       `
     SELECT 
-      id,
-      borrower_id AS "borrowerId",
-      amt_requested AS "amtRequested",
-      purpose_id AS "purposeId",
-      app_open_date AS "appOpenDate",
-      interest_rate AS "interestRate",
-      term,
-      installment_amt as "installmentAmt"
-    FROM active_requests
-    WHERE id = $1
+      r.id,
+      r.borrower_id AS "borrowerId",
+      r.amt_requested AS "amtRequested",
+      p.title AS "purpose",
+      r.app_open_date AS "appOpenDate",
+      r.interest_rate AS "interestRate",
+      r.term,
+      r.installment_amt as "installmentAmt"
+    FROM active_requests AS "r"
+    JOIN purpose AS "p" ON p.id = r.purpose_id
+    WHERE r.id = $1
     `,
       [id]
     );

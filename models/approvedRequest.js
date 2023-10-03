@@ -18,21 +18,24 @@ class ApprovedRequest {
   static async getAll() {
     const result = await db.query(`
       SELECT 
-        id,
-        borrower_id AS "borrowerId",
-        amt_requested AS "amtRequested",
-        amt_approved AS "amtApproved",
-        amt_funded AS "amtFunded",
-        purpose_id AS "purposeId",
-        app_open_date AS "appOpenDate",
-        app_approved_date AS "appApprovedDate",
-        funding_deadline AS "fundingDeadline",
-        interest_rate AS "interestRate",
-        term,
-        installment_amt AS "installmentAmt",
-        available_for_funding AS "availableForFunding",
-        is_funded AS "isFunded"
-      FROM approved_requests`);
+        r.id,
+        r.borrower_id AS "borrowerId",
+        r.amt_requested AS "amtRequested",
+        r.amt_approved AS "amtApproved",
+        r.amt_funded AS "amtFunded",
+        p.title AS "purpose",
+        r.app_open_date AS "appOpenDate",
+        r.app_approved_date AS "appApprovedDate",
+        r.funding_deadline AS "fundingDeadline",
+        r.interest_rate AS "interestRate",
+        r.term,
+        r.installment_amt AS "installmentAmt",
+        r.available_for_funding AS "availableForFunding",
+        r.is_funded AS "isFunded"
+      FROM approved_requests AS "r"
+      JOIN purpose AS "p" ON p.id = r.purpose_id
+      ORDER BY r.id
+      `);
     return result.rows;
   }
 
@@ -41,22 +44,23 @@ class ApprovedRequest {
     const result = await db.query(
       `
       SELECT 
-        id,
-        borrower_id AS "borrowerId",
-        amt_requested AS "amtRequested",
-        amt_approved AS "amtApproved",
-        amt_funded AS "amtFunded",
-        purpose_id AS "purposeId",
-        app_open_date AS "appOpenDate",
-        app_approved_date AS "appApprovedDate",
-        funding_deadline AS "fundingDeadline",
-        interest_rate AS "interestRate",
-        term,
-        installment_amt AS "installmentAmt",
-        available_for_funding AS "availableForFunding",
-        is_funded AS "isFunded"
-      FROM approved_requests
-      WHERE id = $1
+        r.id,
+        r.borrower_id AS "borrowerId",
+        r.amt_requested AS "amtRequested",
+        r.amt_approved AS "amtApproved",
+        r.amt_funded AS "amtFunded",
+        p.title AS "purpose",
+        r.app_open_date AS "appOpenDate",
+        r.app_approved_date AS "appApprovedDate",
+        r.funding_deadline AS "fundingDeadline",
+        r.interest_rate AS "interestRate",
+        r.term,
+        r.installment_amt AS "installmentAmt",
+        r.available_for_funding AS "availableForFunding",
+        r.is_funded AS "isFunded"
+      FROM approved_requests AS "r"
+      JOIN purpose AS "p" ON p.id = r.purpose_id
+      WHERE r.id = $1
     `,
       [id]
     );
