@@ -33,6 +33,8 @@ class User {
     lastName,
     email,
     accountBalance,
+    annualIncome,
+    otherMonthlyDebt,
     roles,
   }) {
     // Check for duplicates
@@ -62,17 +64,30 @@ class User {
          first_name,
          last_name,
          email,
-         account_balance)
-        VALUES ($1, $2, $3, $4, $5, $6)
+         account_balance,
+         annual_income,
+         other_monthly_debt)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING
           id,
           username,
           first_name AS "firstName",
           last_name AS "lastName",
           email,
-          account_balance AS "accountBalance"
+          account_balance AS "accountBalance",
+          annual_income AS "annualIncome",
+          other_monthly_debt AS "otherMonthlyDebt"
       `,
-      [username, hashedPwd, firstName, lastName, email, accountBalance]
+      [
+        username,
+        hashedPwd,
+        firstName,
+        lastName,
+        email,
+        accountBalance,
+        annualIncome,
+        otherMonthlyDebt,
+      ]
     );
     const user = resultUser.rows[0];
 
@@ -90,11 +105,14 @@ class User {
   static async getAll() {
     const result = await db.query(
       `
-      SELECT username,
-        first_name AS firstName,
-        last_name AS lastName,
+      SELECT id, 
+        username,
+        first_name AS "firstName",
+        last_name AS "lastName",
         email,
-        account_balance AS accountBalance
+        account_balance AS "accountBalance",
+        annual_income AS "annualIncome",
+        other_monthly_debt AS "otherMonthlyDebt"
       FROM users
       ORDER BY username
       `
@@ -105,7 +123,8 @@ class User {
 
   /** Given a username, return user data
    *
-   * @returns {username, firstName, lastName, email, accountBalance}
+   * @returns {username, firstName, lastName, email, accountBalance,
+   *  annualIncome, otherMonthlyDebt}
    *
    * @throws NotFoundError if no username is found.
    */
@@ -113,11 +132,13 @@ class User {
   static async get(username) {
     const result = await db.query(
       `SELECT id, 
-      username,
-      first_name AS firstName,
-      last_name AS lastName,
-      email,
-      account_balance AS accountBALANCE
+        username,
+        first_name AS "firstName",
+        last_name AS "lastName",
+        email,
+        account_balance AS "accountBalance",
+        annual_income AS "annualIncome",
+        other_monthly_debt AS "otherMonthlyDebt"
       FROM users
       WHERE username = $1`,
       [username]
@@ -176,6 +197,7 @@ class User {
       SET ${cols}
       WHERE username = $${usernameIdx}
       RETURNING
+        id,
         username,
         first_name AS firstName,
         last_name AS lastName,
@@ -197,10 +219,12 @@ class User {
       `SELECT id,
         username,
         password,
-        first_name AS firstName,
-        last_name AS lastName,
+        first_name AS "firstName",
+        last_name AS "lastName",
         email,
-        account_balance AS accountBALANCE
+        account_balance AS "accountBalance",
+        annual_income AS "annualIncome",
+        other_monthly_debt AS "otherMonthlyDebt"
       FROM users
       WHERE username = $1`,
       [username]

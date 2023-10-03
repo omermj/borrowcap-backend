@@ -17,14 +17,7 @@ const ApprovedRequest = require("./approvedRequest");
 
 class ActiveRequest {
   /** Create Active Request */
-  static async create({
-    borrowerId,
-    amtRequested,
-    purposeId,
-    income,
-    otherDebt,
-    term,
-  }) {
+  static async create({ borrowerId, amtRequested, purposeId, term }) {
     // Get date
     const date = new Date().toUTCString();
 
@@ -40,36 +33,22 @@ class ActiveRequest {
       (borrower_id,
         amt_requested,
         purpose_id,
-        income,
-        other_debt,
         app_open_date,
         interest_rate,
         term,
         installment_amt)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING
         id,
         borrower_id AS "borrowerId",
         amt_requested AS "amtRequested",
         purpose_id AS "purposeId",
-        income,
-        other_debt AS "otherDebt",
         app_open_date AS "appOpenDate",
         interest_rate AS "interestRate",
         term,
         installment_amt AS "installmentAmt"
     `,
-      [
-        borrowerId,
-        amtRequested,
-        purposeId,
-        income,
-        otherDebt,
-        date,
-        interestRate,
-        term,
-        pmt,
-      ]
+      [borrowerId, amtRequested, purposeId, date, interestRate, term, pmt]
     );
 
     return result.rows[0];
@@ -84,8 +63,6 @@ class ActiveRequest {
         borrower_id AS "borrowerId",
         amt_requested AS "amtRequested",
         purpose_id AS "purposeId",
-        income,
-        other_debt AS "otherDebt",
         app_open_date AS "appOpenDate",
         interest_rate AS "interestRate",
         term,
@@ -104,8 +81,6 @@ class ActiveRequest {
       borrower_id AS "borrowerId",
       amt_requested AS "amtRequested",
       purpose_id AS "purposeId",
-      income,
-      other_debt AS "otherDebt",
       app_open_date AS "appOpenDate",
       interest_rate AS "interestRate",
       term,
@@ -122,8 +97,7 @@ class ActiveRequest {
   }
 
   /** Update Active Request, given id and data
-   * Fields allowed to be updated: amt_requested, purpose_id, income,
-   * other_debt, interest_rate, term
+   * Fields allowed to be updated: amt_requested, purpose_id, interest_rate, term
    */
 
   static async update(id, data) {
@@ -131,7 +105,6 @@ class ActiveRequest {
     const { cols, values } = generateUpdateQuery(data, {
       amtRequested: "amt_requested",
       purposeId: "purpose_id",
-      otherDebt: "other_debt",
       interestRate: "interest_rate",
     });
 
@@ -144,8 +117,6 @@ class ActiveRequest {
         borrower_id AS "borrowerId",
         amt_requested AS "amtRequested",
         purpose_id AS "purposeId",
-        income,
-        other_debt AS "otherDebt",
         app_open_date AS "appOpenDate",
         interest_rate AS "interestRate",
         term,
@@ -181,8 +152,6 @@ class ActiveRequest {
   //** Approve Active Request */
   static async approve(id, data) {
     const activeRequest = await ActiveRequest.get(id);
-    console.log(activeRequest);
-
     const { interestRate, amtApproved, term } = data;
 
     // Get approval date
@@ -198,7 +167,6 @@ class ActiveRequest {
     const pmt = this.calculatePayment(amtApproved, interestRate / 12, term);
 
     // Get active request from database
-
     activeRequest.interestRate = interestRate;
     activeRequest.term = term;
     activeRequest.installmentAmt = pmt;

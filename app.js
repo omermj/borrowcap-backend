@@ -9,6 +9,7 @@ const userRoutes = require("./routes/users");
 const authRoutes = require("./routes/auth");
 const activeRequestsRoutes = require("./routes/activeRequests");
 const approvedRequestRoutes = require("./routes/approvedRequests");
+const fundedLoansRoutes = require("./routes/fundedLoans");
 const { ExpressError, NotFoundError } = require("./expressError");
 const { authenticateJWT } = require("./middleware/auth");
 
@@ -26,6 +27,7 @@ app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/activerequests", activeRequestsRoutes);
 app.use("/approvedrequests", approvedRequestRoutes);
+app.use("/fundedloans", fundedLoansRoutes);
 
 /** Handle 404 errors */
 app.use(function (req, res, next) {

@@ -19,8 +19,6 @@ class CancelledRequest {
     amtRequested,
     amtApproved,
     purposeId,
-    income,
-    otherDebt,
     appOpenDate,
     appApprovedDate,
     appCancelledDate,
@@ -40,8 +38,6 @@ class CancelledRequest {
         amt_requested,
         amt_approved,
         purpose_id,
-        income,
-        other_debt,
         app_open_date,
         app_approved_date,
         app_cancelled_date,
@@ -51,15 +47,13 @@ class CancelledRequest {
         installment_amt,
         was_approved,
         cancellation_reason_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING
         id,
         borrower_id AS "borrowerId",
         amt_requested AS "amtRequested",
         amt_approved AS "amtApproved",
         purpose_id AS "purposeId",
-        income,
-        other_debt AS "otherDebt",
         app_open_date AS "appOpenDate",
         app_approved_date AS "appApprovedDate",
         app_cancelled_date AS "appCancelledDate",
@@ -76,8 +70,6 @@ class CancelledRequest {
           amtRequested,
           amtApproved,
           purposeId,
-          income,
-          otherDebt,
           appOpenDate,
           appApprovedDate,
           appCancelledDate,

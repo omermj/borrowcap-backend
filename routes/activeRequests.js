@@ -16,8 +16,8 @@ const router = express.Router();
 /** Get all loans */
 router.get("/", async (req, res, next) => {
   try {
-    const loanRequests = await ActiveRequest.getAll();
-    return res.json({ loanRequests });
+    const activeRequests = await ActiveRequest.getAll();
+    return res.json({ activeRequests });
   } catch (e) {
     return next(e);
   }

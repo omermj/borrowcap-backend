@@ -7,7 +7,9 @@ CREATE TABLE users (
   first_name VARCHAR(255) NOT NULL,
   last_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL,
-  account_balance NUMERIC NOT NULL);
+  account_balance NUMERIC NOT NULL,
+  annual_income NUMERIC NOT NULL,
+  other_monthly_debt NUMERIC NOT NULL);
 
 CREATE TABLE roles (
   id SERIAL PRIMARY KEY,
@@ -32,8 +34,6 @@ CREATE TABLE active_requests (
   borrower_id INTEGER NOT NULL,
   amt_requested NUMERIC NOT NULL,
   purpose_id INTEGER NOT NULL,
-  income NUMERIC NOT NULL,
-  other_debt NUMERIC NOT NULL,
   app_open_date TIMESTAMP NOT NULL,
   interest_rate NUMERIC NOT NULL,
   term INTEGER NOT NULL,
@@ -49,8 +49,6 @@ CREATE TABLE approved_requests (
   amt_approved NUMERIC NOT NULL,
   amt_funded NUMERIC NOT NULL,
   purpose_id INTEGER NOT NULL,
-  income NUMERIC NOT NULL,
-  other_debt NUMERIC NOT NULL,
   app_open_date TIMESTAMP NOT NULL,
   app_approved_date TIMESTAMP NOT NULL,
   funding_deadline TIMESTAMP NOT NULL,
@@ -82,8 +80,6 @@ CREATE TABLE cancelled_requests (
   amt_requested NUMERIC NOT NULL,
   amt_approved NUMERIC,
   purpose_id INTEGER,
-  income NUMERIC NOT NULL,
-  other_debt NUMERIC NOT NULL,
   app_open_date TIMESTAMP NOT NULL,
   app_approved_date TIMESTAMP,
   app_cancelled_date TIMESTAMP NOT NULL,

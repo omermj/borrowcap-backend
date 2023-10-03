@@ -3,14 +3,7 @@
   "$id": "http://example.com/example.json",
   "type": "object",
   "title": "New Loan Application Schema",
-  "required": [
-    "borrowerId",
-    "amtRequested",
-    "purposeId",
-    "income",
-    "otherDebt",
-    "term"
-  ],
+  "required": ["borrowerId", "amtRequested", "purposeId", "term"],
   "properties": {
     "borrowerId": {
       "type": "integer"
@@ -21,14 +14,6 @@
     },
     "purposeId": {
       "type": "integer"
-    },
-    "income": {
-      "type": "number",
-      "minimum": 1
-    },
-    "otherDebt": {
-      "type": "number",
-      "minimum": 1
     },
     "term": {
       "type": "integer",

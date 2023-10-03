@@ -10,7 +10,9 @@
     "firstName",
     "lastName",
     "email",
-    "accountBalance"
+    "accountBalance",
+    "annualIncome",
+    "otherMonthlyDebt"
   ],
   "properties": {
     "username": {
@@ -50,6 +52,18 @@
       "minimum": 0,
       "examples": [10000]
     },
+    "annualIncome": {
+      "type": "number",
+      "default": 0,
+      "minimum": 0,
+      "examples": [10000]
+    },
+    "otherMonthlyDebt": {
+      "type": "number",
+      "default": 0,
+      "minimum": 0,
+      "examples": [10000]
+    },
     "roles": {
       "type": "array",
       "default": [],
@@ -57,16 +71,6 @@
         "type": "string",
         "examples": ["admin", "investor"]
       }
-    },
-    "examples": [
-      {
-        "username": "testuser2",
-        "password": "pass",
-        "firstName": "Test",
-        "lastName": "User",
-        "email": "testuser1@email.com",
-        "accountBalance": 10000
-      }
-    ]
+    }
   }
 }

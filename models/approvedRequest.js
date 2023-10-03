@@ -9,7 +9,6 @@ const {
   BadRequestError,
   UnauthorizedError,
 } = require("../expressError");
-const app = require("../app");
 const FundedLoan = require("./fundedLoan");
 
 /** Database Model: Approved Loan Requests */
@@ -25,8 +24,6 @@ class ApprovedRequest {
         amt_approved AS "amtApproved",
         amt_funded AS "amtFunded",
         purpose_id AS "purposeId",
-        income,
-        other_debt AS "otherDebt",
         app_open_date AS "appOpenDate",
         app_approved_date AS "appApprovedDate",
         funding_deadline AS "fundingDeadline",
@@ -50,8 +47,6 @@ class ApprovedRequest {
         amt_approved AS "amtApproved",
         amt_funded AS "amtFunded",
         purpose_id AS "purposeId",
-        income,
-        other_debt AS "otherDebt",
         app_open_date AS "appOpenDate",
         app_approved_date AS "appApprovedDate",
         funding_deadline AS "fundingDeadline",
@@ -79,8 +74,6 @@ class ApprovedRequest {
     amtApproved,
     amtFunded,
     purposeId,
-    income,
-    otherDebt,
     appOpenDate,
     appApprovedDate,
     fundingDeadline,
@@ -100,8 +93,6 @@ class ApprovedRequest {
           amt_approved,
           amt_funded,
           purpose_id,
-          income,
-          other_debt,
           app_open_date,
           app_approved_date,
           funding_deadline,
@@ -110,7 +101,7 @@ class ApprovedRequest {
           installment_amt,
           available_for_funding,
           is_funded)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING
           id,
           borrower_id AS "borrowerId",
@@ -118,8 +109,6 @@ class ApprovedRequest {
           amt_approved AS "amtApproved",
           amt_funded AS "amtFunded",
           purpose_id AS "purposeId",
-          income,
-          other_debt AS "otherDebt",
           app_open_date AS "appOpenDate",
           app_approved_date AS "appApprovedDate",
           funding_deadline AS "fundingDeadline",
@@ -136,8 +125,6 @@ class ApprovedRequest {
           amtApproved,
           amtFunded,
           purposeId,
-          income,
-          otherDebt,
           appOpenDate,
           appApprovedDate,
           fundingDeadline,
@@ -175,8 +162,6 @@ class ApprovedRequest {
       amt_approved AS "amtApproved",
       amt_funded AS "amtFunded",
       purpose_id AS "purposeId",
-      income,
-      other_debt AS "otherDebt",
       app_open_date AS "appOpenDate",
       app_approved_date AS "appApprovedDate",
       funding_deadline AS "fundingDeadline",
