@@ -24,6 +24,7 @@ class ApprovedRequest {
         r.amt_approved AS "amtApproved",
         r.amt_funded AS "amtFunded",
         p.title AS "purpose",
+        p.id AS "purposeId",
         r.app_open_date AS "appOpenDate",
         r.app_approved_date AS "appApprovedDate",
         r.funding_deadline AS "fundingDeadline",
@@ -33,7 +34,7 @@ class ApprovedRequest {
         r.available_for_funding AS "availableForFunding",
         r.is_funded AS "isFunded"
       FROM approved_requests AS "r"
-      JOIN purpose AS "p" ON p.id = r.purpose_id
+      LEFT JOIN purpose AS "p" ON p.id = r.purpose_id
       ORDER BY r.id
       `);
     return result.rows;

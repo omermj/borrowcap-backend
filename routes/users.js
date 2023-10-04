@@ -45,7 +45,7 @@ router.get("/:username", correctUserOrAdmin, async (req, res, next) => {
   }
 });
 
-router.delete("/:username", correctUserOrAdmin, async (req, res, next) => {
+router.delete("/:username", async (req, res, next) => {
   try {
     await User.delete(req.params.username);
     return res.json({ message: `deteled ${req.params.username}` });
@@ -58,6 +58,26 @@ router.patch("/:username", correctUserOrAdmin, async (req, res, next) => {
   try {
     const user = await User.update(req.body.username, req.body);
     return res.json({ user });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+/** Get Active Requests for User */
+router.get("/:id/activerequests", async (req, res, next) => {
+  try {
+    const activeRequests = await User.getActiveRequests(req.params.id);
+    return res.json({ activeRequests });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+/** Get Funded Loans for User */
+router.get("/:id/fundedloans", async (req, res, next) => {
+  try {
+    const fundedLoans = await User.getFundedLoans(req.params.id);
+    return res.json({ fundedLoans });
   } catch (e) {
     return next(e);
   }

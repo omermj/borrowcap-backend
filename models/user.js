@@ -92,7 +92,7 @@ class User {
     const user = resultUser.rows[0];
 
     // assign role to user
-    const userWithRoles = await User.assignRoles(user, roles);
+    const userWithRoles = await User.assignRoles(user.id, roles);
 
     return userWithRoles;
   }
@@ -129,7 +129,7 @@ class User {
    * @throws NotFoundError if no username is found.
    */
 
-  static async get(username) {
+  static async get(id) {
     const result = await db.query(
       `SELECT id, 
         username,
@@ -140,11 +140,11 @@ class User {
         annual_income AS "annualIncome",
         other_monthly_debt AS "otherMonthlyDebt"
       FROM users
-      WHERE username = $1`,
-      [username]
+      WHERE id = $1`,
+      [id]
     );
     const user = result.rows[0];
-    if (!user) throw new NotFoundError(`No user with username: ${username}`);
+    if (!user) throw new NotFoundError(`No user with id: ${id}`);
 
     // get roles from database
     const roles = await User.getRoles(user.id);
@@ -158,16 +158,16 @@ class User {
    * @returns {undefined}
    * @throws {NotFoundError} if username does not exist
    */
-  static async delete(username) {
+  static async delete(id) {
     const result = await db.query(
       `DELETE
         FROM users
-        WHERE username = $1
-        RETURNING username`,
-      [username]
+        WHERE id = $1
+        RETURNING id`,
+      [id]
     );
     const user = result.rows[0];
-    if (!user) throw new NotFoundError(`No user: ${username}`);
+    if (!user) throw new NotFoundError(`No user with id: ${id}`);
   }
 
   /**
@@ -176,7 +176,7 @@ class User {
    * @returns {user}
    * @throws {NotFoundError} if username does not exist
    */
-  static async update(username, data) {
+  static async update(id, data) {
     // handle password update
     if (data.password) {
       data.password = await bcrypt.hash(data.password, BCRYPT_WORK_FACTOR);
@@ -190,12 +190,12 @@ class User {
     });
 
     // get username index
-    const usernameIdx = values.length + 1;
+    const userIdIdx = values.length + 1;
 
     const sqlQuery = `
       UPDATE users
       SET ${cols}
-      WHERE username = $${usernameIdx}
+      WHERE id = $${userIdIdx}
       RETURNING
         id,
         username,
@@ -205,9 +205,9 @@ class User {
         account_balance AS accountBalance
       `;
 
-    const result = await db.query(sqlQuery, [...values, username]);
+    const result = await db.query(sqlQuery, [...values, id]);
     const user = result.rows[0];
-    if (!user) throw new NotFoundError(`No user: ${username}`);
+    if (!user) throw new NotFoundError(`No user with id: ${id}`);
     return user;
   }
 
@@ -247,7 +247,11 @@ class User {
 
   /** Assign roles to given user */
 
-  static async assignRoles(user, roles) {
+  static async assignRoles(userId, roles) {
+    // get user from database
+    const user = await User.get(userId);
+    if (!user) throw new NotFoundError(`No user with id: ${userId}`);
+
     // get roles from database
     const rolesObj = await Role.getAll();
 
@@ -259,7 +263,7 @@ class User {
         INSERT INTO users_roles
           (user_id, role_id)
         VALUES ($1, $2)`,
-          [user.id, rolesObj[role]]
+          [userId, rolesObj[role]]
         );
       }
       return { ...user, roles };
@@ -280,6 +284,55 @@ class User {
       [userId]
     );
     return result.rows.map((role) => role.name);
+  }
+
+  /** Get Active Requests for a given BorrowerId */
+  static async getActiveRequests(id) {
+    // Check if BorrowerId exists
+    const borrower = await User.get(id);
+    if (!borrower) throw new NotFoundError(`No borrower with id: ${id}`);
+
+    const result = await db.query(
+      `
+  SELECT 
+    r.id,
+    r.amt_requested AS "amtRequested",
+    p.title AS "purpose",
+    r.app_open_date AS "appOpenDate",
+    r.interest_rate AS "interestRate",
+    r.term,
+    r.installment_amt as "installmentAmt"
+  FROM active_requests AS "r"
+  JOIN purpose AS "p" ON p.id = r.purpose_id
+  WHERE r.borrower_id = $1
+  `,
+      [id]
+    );
+    return result.rows;
+  }
+
+  /** Get Funded Loans for a given BorrowerId */
+  static async getFundedLoans(id) {
+    // Check if BorrowerId exists
+    const borrower = await User.get(id);
+    if (!borrower) throw new NotFoundError(`No borrower with id: ${id}`);
+
+    const result = await db.query(
+      `
+  SELECT 
+    f.id,
+    f.amt_funded AS "amtFunded",
+    f.funded_date AS "fundedDate",
+    f.interest_rate AS "interestRate",
+    f.term,
+    f.installment_amt AS "installmentAmt",
+    f.remaining_balance AS "remainingBalance"
+  FROM funded_loans AS "f"
+  WHERE f.borrower_id = $1
+  `,
+      [id]
+    );
+    return result.rows;
   }
 }
 

@@ -63,6 +63,7 @@ class ActiveRequest {
         r.borrower_id AS "borrowerId",
         r.amt_requested AS "amtRequested",
         p.title AS "purpose",
+        p.id AS "purposeId",
         r.app_open_date AS "appOpenDate",
         r.interest_rate AS "interestRate",
         r.term,
@@ -83,6 +84,7 @@ class ActiveRequest {
       r.borrower_id AS "borrowerId",
       r.amt_requested AS "amtRequested",
       p.title AS "purpose",
+      p.id AS "purposeId",
       r.app_open_date AS "appOpenDate",
       r.interest_rate AS "interestRate",
       r.term,
@@ -169,7 +171,7 @@ class ActiveRequest {
     // Calculate installment amount
     const pmt = this.calculatePayment(amtApproved, interestRate / 12, term);
 
-    // Get active request from database
+    // Modify active request parameters
     activeRequest.interestRate = interestRate;
     activeRequest.term = term;
     activeRequest.installmentAmt = pmt;
