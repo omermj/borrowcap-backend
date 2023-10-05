@@ -10,7 +10,6 @@ class FundedLoan {
   static async getAll() {
     const result = await db.query(`
     SELECT id,
-      app_id AS "appId",
       borrower_id AS "borrowerId",
       amt_funded AS "amtFunded",
       funded_date AS "fundedDate",
@@ -27,7 +26,6 @@ class FundedLoan {
   static async get(id) {
     const result = await db.query(
       `SELECT id,
-        app_id AS "appId",
         borrower_id AS "borrowerId",
         amt_funded AS "amtFunded",
         funded_date AS "fundedDate",
@@ -59,7 +57,7 @@ class FundedLoan {
     const result = await db.query(
       `
       INSERT INTO funded_loans
-        (app_id,
+        (id,
           borrower_id,
           amt_funded,
           funded_date,
@@ -71,7 +69,6 @@ class FundedLoan {
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING
           id,
-          app_id AS "appId",
           borrower_id AS "borrowerId",
           amt_funded AS "amtFunded",
           funded_date AS "fundedDate",

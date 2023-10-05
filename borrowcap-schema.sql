@@ -64,9 +64,10 @@ CREATE TABLE approved_requests (
 CREATE TABLE approved_requests_investors (
   request_id INTEGER,
   investor_id INTEGER,
+  pledged_amt NUMERIC NOT NULL,
   PRIMARY KEY (request_id, investor_id),
   FOREIGN KEY (request_id) REFERENCES approved_requests (id) ON DELETE CASCADE,
-  FOREIGN KEY (investor_id) REFERENCES users (id) ON DELETE CASCADE
+  FOREIGN KEY (investor_id) REFERENCES users (id) ON DELETE SET NULL
 );
 
 CREATE TABLE cancellation_reasons (
@@ -95,8 +96,7 @@ CREATE TABLE cancelled_requests (
 );
 
 CREATE TABLE funded_loans (
-  id SERIAL PRIMARY KEY,
-  app_id INTEGER,
+  id INTEGER PRIMARY KEY NOT NULL,
   borrower_id INTEGER,
   amt_funded NUMERIC NOT NULL,
   funded_date TIMESTAMP NOT NULL,
@@ -104,6 +104,15 @@ CREATE TABLE funded_loans (
   term INTEGER NOT NULL,
   installment_amt NUMERIC NOT NULL,
   remaining_balance NUMERIC NOT NULL,
-  FOREIGN KEY (app_id) REFERENCES approved_requests (id) ON DELETE SET NULL,
+  FOREIGN KEY (id) REFERENCES approved_requests (id) ON DELETE SET NULL,
   FOREIGN KEY (borrower_id) REFERENCES users (id) ON DELETE SET NULL
+);
+
+CREATE TABLE funded_loans_investors (
+  loan_id INTEGER,
+  investor_id INTEGER,
+  invested_amt NUMERIC NOT NULL,
+  PRIMARY KEY (loan_id, investor_id),
+  FOREIGN KEY (loan_id) REFERENCES funded_loans (id) ON DELETE CASCADE,
+  FOREIGN KEY (investor_id) REFERENCES users (id) ON DELETE SET NULL
 );

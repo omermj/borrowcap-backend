@@ -273,7 +273,6 @@ class User {
   }
 
   // Get roles assigned to user given userId
-
   static async getRoles(userId) {
     const result = await db.query(
       `
@@ -312,7 +311,7 @@ class User {
   }
 
   /** Get Funded Loans for a given BorrowerId */
-  static async getFundedLoans(id) {
+  static async getFundedLoansForBorrower(id) {
     // Check if BorrowerId exists
     const borrower = await User.get(id);
     if (!borrower) throw new NotFoundError(`No borrower with id: ${id}`);
@@ -330,6 +329,29 @@ class User {
   FROM funded_loans AS "f"
   WHERE f.borrower_id = $1
   `,
+      [id]
+    );
+    return result.rows;
+  }
+
+  static async getActiveInvestmentsForInvestor(id) {
+    // Check if InvestorId exists
+    const investor = await User.get(id);
+    if (!investor) throw new NotFoundError(`No investor with id: ${id}`);
+
+    const result = await db.query(
+      `SELECT 
+        f.id,
+        l.invested_amt AS "amtInvested",
+        f.amt_funded AS "amtFunded",
+        f.funded_date AS "fundedDate",
+        f.interest_rate AS "interestRate",
+        f.term,
+        f.installment_amt AS "installmentAmt",
+        f.remaining_balance AS "remainingBalance"
+      FROM funded_loans AS "f"
+      JOIN funded_loans_investors AS "l" ON f.id = l.loan_id
+      WHERE l.investor_id = $1`,
       [id]
     );
     return result.rows;

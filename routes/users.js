@@ -73,11 +73,22 @@ router.get("/:id/activerequests", async (req, res, next) => {
   }
 });
 
-/** Get Funded Loans for User */
+/** Get Funded Loans for Borrower */
 router.get("/:id/fundedloans", async (req, res, next) => {
   try {
-    const fundedLoans = await User.getFundedLoans(req.params.id);
+    const fundedLoans = await User.getFundedLoansForBorrower(req.params.id);
     return res.json({ fundedLoans });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+router.get("/:id/activeinvestments", async (req, res, next) => {
+  try {
+    const activeInvestments = await User.getActiveInvestmentsForInvestor(
+      req.params.id
+    );
+    return res.json({ activeInvestments });
   } catch (e) {
     return next(e);
   }

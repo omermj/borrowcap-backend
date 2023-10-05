@@ -55,10 +55,13 @@ router.patch("/:id/enablefunding", async (req, res, next) => {
 
 router.patch("/:id/fund", async (req, res, next) => {
   try {
-    if (!req.body.amount)
-      throw new BadRequestError("No amount provided as part of request body");
+    if (!req.body.amount || !req.body.investorId)
+      throw new BadRequestError(
+        "No amount or investorId provided as part of request body"
+      );
     const approvedRequest = await ApprovedRequest.fund(
       req.params.id,
+      req.body.investorId,
       req.body.amount
     );
     if (!approvedRequest)
