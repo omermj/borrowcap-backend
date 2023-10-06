@@ -83,12 +83,25 @@ router.get("/:id/fundedloans", async (req, res, next) => {
   }
 });
 
+/** Get Active Investments for Investors */
 router.get("/:id/activeinvestments", async (req, res, next) => {
   try {
     const activeInvestments = await User.getActiveInvestmentsForInvestor(
       req.params.id
     );
     return res.json({ activeInvestments });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+/** Get Pledged Investments for Investors */
+router.get("/:id/pledgedinvestments", async (req, res, next) => {
+  try {
+    const pledgedInvestments = await User.getPledgedInvestmentsForInvestor(
+      req.params.id
+    );
+    return res.json({ pledgedInvestments });
   } catch (e) {
     return next(e);
   }

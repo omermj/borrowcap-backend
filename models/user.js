@@ -356,6 +356,30 @@ class User {
     );
     return result.rows;
   }
+
+  static async getPledgedInvestmentsForInvestor(id) {
+    // Check if InvestorId exists
+    const investor = await User.get(id);
+    if (!investor) throw new NotFoundError(`No investor with id: ${id}`);
+
+    const result = await db.query(
+      `
+      SELECT
+        r.id AS "id",
+        r.amt_approved AS "amtApproved",
+        i.pledged_amt AS "amtPledged",
+        r.app_approved_date AS "approvedDate",
+        r.funding_deadline AS "fundingDeadline",
+        r.interest_rate AS "interestRate",
+        r.term AS "term"
+      FROM approved_requests AS "r"
+      JOIN approved_requests_investors AS "i" ON i.request_id = r.id
+      WHERE i.investor_id = $1
+    `,
+      [id]
+    );
+    return result.rows;
+  }
 }
 
 module.exports = User;

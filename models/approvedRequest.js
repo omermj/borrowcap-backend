@@ -296,6 +296,11 @@ class ApprovedRequest {
       });
       const updateInvestorRelation =
         await ApprovedRequest.updateFundedLoanInvestorRelation(appId);
+
+      // Remove relationship between approved_request and investors as request is
+      // funded
+      ApprovedRequest.removeRelationApprovedRequestInvestors(appId);
+
       return updatedApprovedRequest;
     }
 
@@ -349,6 +354,20 @@ class ApprovedRequest {
       `,
       [loanId]
     );
+  }
+
+  static async removeRelationApprovedRequestInvestors(appId) {
+    const result = await db.query(
+      `
+      DELETE
+        FROM approved_requests_investors
+        WHERE request_id = $1
+        RETURNING request_id
+    `,
+      [appId]
+    );
+    const id = result.rows[0];
+    if (!id) new NotFoundError(`No request with id: ${appId}`);
   }
 }
 
