@@ -70,6 +70,7 @@ class ActiveRequest {
         r.installment_amt as "installmentAmt"
       FROM active_requests AS "r"
       JOIN purpose AS "p" ON p.id = r.purpose_id
+      ORDER BY r.id
       `);
     return result.rows;
   }

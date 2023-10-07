@@ -11,7 +11,7 @@ const app = require("../app");
 
 const router = express.Router();
 
-/** Get all loans */
+/** Get all approved requests */
 router.get("/", async (req, res, next) => {
   try {
     const approvedRequests = await ApprovedRequest.getAll();
