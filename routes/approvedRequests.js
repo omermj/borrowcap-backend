@@ -21,6 +21,17 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+/** Get all approved requests which are available for investment */
+router.get("/available", async (req, res, next) => {
+  try {
+    console.log("in request");
+    const availableInvestments = await ApprovedRequest.getAvailable();
+    return res.json({ availableInvestments });
+  } catch (e) {
+    return next(e);
+  }
+});
+
 /** Given id, return approved request data */
 router.get("/:id", async (req, res, next) => {
   try {

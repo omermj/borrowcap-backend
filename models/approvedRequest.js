@@ -369,6 +369,27 @@ class ApprovedRequest {
     const id = result.rows[0];
     if (!id) new NotFoundError(`No request with id: ${appId}`);
   }
+
+  static async getAvailable() {
+    console.log("In model");
+    const result = await db.query(
+      `
+      SELECT r.id,
+        r.amt_approved AS "amtApproved",
+        r.amt_funded AS "amtFunded",
+        p.title AS "purpose",
+        r.app_approved_date AS "approvedDate",
+        r.funding_deadline AS "fundingDeadline",
+        r.interest_rate AS "interestRate",
+        r.term
+      FROM approved_requests AS "r"
+      JOIN purpose AS "p" ON p.id = r.purpose_id
+      WHERE r.available_for_funding = $1 AND r.is_funded = $2
+      `,
+      [true, false]
+    );
+    return result.rows;
+  }
 }
 
 module.exports = ApprovedRequest;
