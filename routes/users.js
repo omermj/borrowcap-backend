@@ -38,7 +38,7 @@ router.post("/", async (req, res, next) => {
 
 router.get("/:username", correctUserOrAdmin, async (req, res, next) => {
   try {
-    const user = await User.get(req.params.username);
+    const user = await User.getByUsername(req.params.username);
     return res.json({ user });
   } catch (e) {
     return next(e);

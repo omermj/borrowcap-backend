@@ -152,6 +152,30 @@ class User {
     return { ...user, roles };
   }
 
+  /** Get user by given username */
+  static async getByUsername(username) {
+    const result = await db.query(
+      `SELECT id, 
+        username,
+        first_name AS "firstName",
+        last_name AS "lastName",
+        email,
+        account_balance AS "accountBalance",
+        annual_income AS "annualIncome",
+        other_monthly_debt AS "otherMonthlyDebt"
+      FROM users
+      WHERE username = $1`,
+      [username]
+    );
+    const user = result.rows[0];
+    if (!user) throw new NotFoundError(`No user with username: ${username}`);
+
+    // get roles from database
+    const roles = await User.getRoles(user.id);
+
+    return { ...user, roles };
+  }
+
   /**
    * Delete a given user from database.
    * @param {username}
