@@ -32,7 +32,6 @@ class User {
     firstName,
     lastName,
     email,
-    accountBalance,
     annualIncome,
     otherMonthlyDebt,
     roles,
@@ -84,7 +83,7 @@ class User {
         firstName,
         lastName,
         email,
-        accountBalance,
+        0,
         annualIncome,
         otherMonthlyDebt,
       ]

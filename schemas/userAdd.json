@@ -10,9 +10,9 @@
     "firstName",
     "lastName",
     "email",
-    "accountBalance",
     "annualIncome",
-    "otherMonthlyDebt"
+    "otherMonthlyDebt",
+    "roles"
   ],
   "properties": {
     "username": {
@@ -45,12 +45,6 @@
       "minLength": 1,
       "format": "email",
       "examples": ["testuser1@email.com"]
-    },
-    "accountBalance": {
-      "type": "number",
-      "default": 0,
-      "minimum": 0,
-      "examples": [10000]
     },
     "annualIncome": {
       "type": "number",
