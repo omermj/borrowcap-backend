@@ -13,7 +13,7 @@ class Purpose {
 
     // create roles object
     const purposes = {};
-    result.rows.map((purpose) => (purposes[purpose.name] = purpose.id));
+    result.rows.map((purpose) => (purposes[purpose.title] = purpose.id));
 
     return purposes;
   }

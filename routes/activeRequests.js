@@ -25,6 +25,7 @@ router.get("/", async (req, res, next) => {
 
 /** Create new loan request */
 router.post("/", async (req, res, next) => {
+  console.log("inside route");
   try {
     // validate req.body
     const validator = jsonschema.validate(req.body, newLoanSchema);

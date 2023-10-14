@@ -58,9 +58,12 @@ class ApprovedRequest {
         r.term,
         r.installment_amt AS "installmentAmt",
         r.available_for_funding AS "availableForFunding",
-        r.is_funded AS "isFunded"
+        r.is_funded AS "isFunded",
+        u.annual_income AS "annualIncome",
+        u.other_monthly_debt AS "otherMonthlyDebt"
       FROM approved_requests AS "r"
       JOIN purpose AS "p" ON p.id = r.purpose_id
+      JOIN users AS "u" ON u.id = r.borrower_id
       WHERE r.id = $1
     `,
       [id]
