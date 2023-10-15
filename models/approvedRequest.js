@@ -10,6 +10,7 @@ const {
   UnauthorizedError,
 } = require("../expressError");
 const FundedLoan = require("./fundedLoan");
+const User = require("./user");
 
 /** Database Model: Approved Loan Requests */
 
@@ -250,8 +251,9 @@ class ApprovedRequest {
 
   /** Fund Approved Request */
   static async fund(appId, investorId, amount) {
-    // get approved request
+    // get approved request and investor profile
     const approvedRequest = await ApprovedRequest.get(appId);
+    const investor = await User.get(investorId);
 
     // check if request is available for funding
     if (!approvedRequest.availableForFunding)
@@ -272,6 +274,12 @@ class ApprovedRequest {
 
     // if funding amount is equal to remaining amount, fully fund the request
     if (amount === remainingFundingAmount) {
+      // check if investor has enough balance
+      if (investor.accountBalance < amount)
+        throw new BadRequestError(
+          "Investor does not have enough accountBalance"
+        );
+
       // set is_funded to true (fully funded) & set availableForFunding to false
       const updatedApprovedRequest = await ApprovedRequest.update(appId, {
         amtFunded: approvedRequest.amtApproved,
@@ -304,11 +312,24 @@ class ApprovedRequest {
       // funded
       ApprovedRequest.removeRelationApprovedRequestInvestors(appId);
 
+      // Reduce investor balance by amount of contribution
+      await User.withdrawFunds(investor.id, amount);
+
+      // Increase borrower balance by amount of total funded loan
+      await User.depositFunds(fundedLoan.borrowerId, fundedLoan.amtFunded);
+
       return updatedApprovedRequest;
     }
 
-    // if amount is less than remaining amount, update the Active Request entry
+    // else if amount is less than remaining amount, update the Active Request
+    // entry and record it as a pledge
     if (amount < remainingFundingAmount) {
+      // check if investor has enough balance
+      if (investor.accountBalance < amount)
+        throw new BadRequestError(
+          "Investor does not have enough accountBalance"
+        );
+
       const updatedApprovedRequest = await ApprovedRequest.update(appId, {
         amtFunded: +approvedRequest.amtFunded + amount,
       });
@@ -320,6 +341,10 @@ class ApprovedRequest {
           investorId,
           amount
         );
+
+      // Reduce investor balance by amount of pledge
+      await User.withdrawFunds(investor.id, amount);
+
       return updatedApprovedRequest;
     }
   }

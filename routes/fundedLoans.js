@@ -22,14 +22,20 @@ router.get("/", async (req, res, next) => {
 /** Given id, get specific funded loan */
 router.get("/:id", async (req, res, next) => {
   try {
-    const result = await FundedLoan.get(req.params.id);
-    const fundedLoan = result.rows[0];
-    if (!fundedLoan)
-      throw new NotFoundError(`Funded loan with ${id} is not found.`);
+    const fundedLoan = await FundedLoan.get(req.params.id);
     return res.json({ fundedLoan });
   } catch (e) {
     return next(e);
   }
 });
 
+/** Given id, pay installment of a funded loan */
+router.patch("/pay/:id", async (req, res, next) => {
+  try {
+    const fundedLoan = await FundedLoan.payInstallment(req.params.id);
+    return res.json({ fundedLoan });
+  } catch (e) {
+    return next(e);
+  }
+});
 module.exports = router;
