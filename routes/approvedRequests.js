@@ -45,10 +45,8 @@ router.get("/:id", async (req, res, next) => {
 /** Given id, cancel approved request */
 router.patch("/:id/cancel", async (req, res, next) => {
   try {
-    const cancelledRequest = await ApprovedRequest.cancel(req.params.id, 1);
-    if (cancelledRequest)
-      return res.json({ message: "Approved Request is cancelled." });
-    else return res.json({ message: "Approved Request was not cancelled." });
+    const cancelledRequest = await ApprovedRequest.cancel(req.params.id, 3);
+    return res.json({ message: cancelledRequest });
   } catch (e) {
     return next(e);
   }
@@ -64,6 +62,7 @@ router.patch("/:id/enablefunding", async (req, res, next) => {
   }
 });
 
+/** Add funding pledge to an approved request */
 router.patch("/:id/fund", async (req, res, next) => {
   try {
     if (!req.body.amount || !req.body.investorId)

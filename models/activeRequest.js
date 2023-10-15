@@ -89,9 +89,17 @@ class ActiveRequest {
       r.app_open_date AS "appOpenDate",
       r.interest_rate AS "interestRate",
       r.term,
-      r.installment_amt as "installmentAmt"
+      r.installment_amt AS "installmentAmt",
+      u.username AS "username",
+      u.first_name AS "firstName",
+      u.last_name AS "lastName",
+      u.email AS "email",
+      u.account_balance AS "accountBalance",
+      u.annual_income AS "annualIncome",
+      u.other_monthly_debt AS "otherMonthlyDebt"
     FROM active_requests AS "r"
     JOIN purpose AS "p" ON p.id = r.purpose_id
+    JOIN users AS "u" ON u.id = r.borrower_id
     WHERE r.id = $1
     `,
       [id]

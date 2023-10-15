@@ -63,7 +63,7 @@ router.patch("/:username", correctUserOrAdmin, async (req, res, next) => {
   }
 });
 
-/** Get Active Requests for User */
+/** Get Active Requests for Borrower */
 router.get("/:id/activerequests", async (req, res, next) => {
   try {
     const activeRequests = await User.getActiveRequests(req.params.id);
@@ -78,6 +78,18 @@ router.get("/:id/fundedloans", async (req, res, next) => {
   try {
     const fundedLoans = await User.getFundedLoansForBorrower(req.params.id);
     return res.json({ fundedLoans });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+/** Get Approved Requests for Borrower */
+router.get("/:id/approvedrequests", async (req, res, next) => {
+  try {
+    const approvedRequests = await User.getApprovedRequestsForBorrower(
+      req.params.id
+    );
+    return res.json({ approvedRequests });
   } catch (e) {
     return next(e);
   }

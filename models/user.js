@@ -333,6 +333,36 @@ class User {
     return result.rows;
   }
 
+  /** Get approved Requests for a given BorrowerId */
+  static async getApprovedRequestsForBorrower(id) {
+    // Check if BorrowerId exists
+    const borrower = await User.get(id);
+    if (!borrower) throw new NotFoundError(`No borrower with id: ${id}`);
+
+    const result = await db.query(
+      `
+      SELECT 
+        r.id,
+        r.amt_requested AS "amtRequested",
+        r.amt_approved AS "amtApproved",
+        r.amt_funded AS "amtFunded",
+        p.title AS "purpose",
+        r.app_open_date AS "appOpenDate",
+        r.app_approved_date AS "appApprovedDate",
+        r.funding_deadline AS "fundingDeadline",
+        r.interest_rate AS "interestRate",
+        r.term,
+        r.installment_amt AS "installmentAmt",
+        r.available_for_funding AS "availableForFunding"
+      FROM approved_requests AS "r"
+      JOIN purpose AS "p" ON p.id = r.purpose_id
+      WHERE r.borrower_id = $1 AND r.is_funded = $2
+  `,
+      [id, false]
+    );
+    return result.rows;
+  }
+
   /** Get Funded Loans for a given BorrowerId */
   static async getFundedLoansForBorrower(id) {
     // Check if BorrowerId exists
