@@ -433,6 +433,58 @@ class User {
     );
     return result.rows;
   }
+
+  /** Deposit funds - increase User account balance */
+  static async depositFunds(id, amount) {
+    // Check if id exists
+    const user = await User.get(id);
+    if (!user) throw new NotFoundError(`No user with id: ${id}`);
+
+    // Validate amount
+    if (amount < 0) throw new BadRequestError("Amount must be greater than 0");
+
+    // Calculate new account balance amount
+    let updatedAccountBalance = +user.accountBalance + +amount;
+
+    const result = await db.query(
+      `
+      UPDATE users
+        SET account_balance = $1
+        WHERE id = $2
+        RETURNING
+        account_balance AS "accountBalance"
+      `,
+      [updatedAccountBalance, id]
+    );
+    return result.rows[0];
+  }
+
+  /** Withdraw funds - decrease User account balance */
+  static async withdrawFunds(id, amount) {
+    // Check if id exists
+    const user = await User.get(id);
+    if (!user) throw new NotFoundError(`No user with id: ${id}`);
+
+    // Validate amount
+    if (amount < 0) throw new BadRequestError("Amount must be greater than 0");
+
+    // Calculate new account balance amount
+    let updatedAccountBalance = +user.accountBalance - +amount;
+    if (updatedAccountBalance < 0)
+      throw new BadRequestError("Cannot withdraw more than account balance.");
+
+    const result = await db.query(
+      `
+      UPDATE users
+        SET account_balance = $1
+        WHERE id = $2
+        RETURNING
+        account_balance AS "accountBalance"
+      `,
+      [updatedAccountBalance, id]
+    );
+    return result.rows[0];
+  }
 }
 
 module.exports = User;

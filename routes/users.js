@@ -119,4 +119,32 @@ router.get("/:id/pledgedinvestments", async (req, res, next) => {
   }
 });
 
+/** Deposit Funds in User's Account Balance */
+router.patch("/:id/deposit", async (req, res, next) => {
+  try {
+    if (!req.body.amount) throw new BadRequestError("Amount is required.");
+    const accountBalance = await User.depositFunds(
+      req.params.id,
+      req.body.amount
+    );
+    return res.json({ accountBalance });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+/** Withdraw Funds from User's Account Balance */
+router.patch("/:id/withdraw", async (req, res, next) => {
+  try {
+    if (!req.body.amount) throw new BadRequestError("Amount is required.");
+    const accountBalance = await User.withdrawFunds(
+      req.params.id,
+      req.body.amount
+    );
+    return res.json({ accountBalance });
+  } catch (e) {
+    return next(e);
+  }
+});
+
 module.exports = router;
