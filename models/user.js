@@ -199,7 +199,7 @@ class User {
    * @returns {user}
    * @throws {NotFoundError} if username does not exist
    */
-  static async update(id, data) {
+  static async update(username, data) {
     // handle password update
     if (data.password) {
       data.password = await bcrypt.hash(data.password, BCRYPT_WORK_FACTOR);
@@ -210,27 +210,31 @@ class User {
       firstName: "first_name",
       lastName: "last_name",
       accountBalance: "account_balance",
+      annualIncome: "annual_income",
+      otherMonthlyDebt: "other_monthly_debt",
     });
 
     // get username index
-    const userIdIdx = values.length + 1;
+    const usernameIdx = values.length + 1;
 
     const sqlQuery = `
       UPDATE users
       SET ${cols}
-      WHERE id = $${userIdIdx}
+      WHERE username = $${usernameIdx}
       RETURNING
         id,
         username,
-        first_name AS firstName,
-        last_name AS lastName,
+        first_name AS "firstName",
+        last_name AS "lastName",
         email,
-        account_balance AS accountBalance
+        account_balance AS "accountBalance",
+        annual_income AS "annualIncome",
+        other_monthly_debt AS "otherMonthlyDebt"
       `;
 
-    const result = await db.query(sqlQuery, [...values, id]);
+    const result = await db.query(sqlQuery, [...values, username]);
     const user = result.rows[0];
-    if (!user) throw new NotFoundError(`No user with id: ${id}`);
+    if (!user) throw new NotFoundError(`No user with username: ${username}`);
     return user;
   }
 
