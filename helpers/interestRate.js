@@ -18,8 +18,9 @@ async function getBondYields() {
   for (const key in lastDay) {
     if (key.includes("2YR") || key.includes("3YR") || key.includes("5YR")) {
       const label = key.replace("BD.CDN.", "").replace(".DQ.YLD", "");
-      yields[label] = +lastDay[key].v;
+      yields[+label.replace("YR", "") * 12] = +lastDay[key].v;
     }
+    yields[48] = +((yields[36] + yields[60]) / 2).toFixed(2);
   }
   return yields;
 }
@@ -28,12 +29,12 @@ async function getBillYields() {
   const response = await axios.get(BASE_URL_BILLS);
   const data = response.data.observations;
   const lastDay = data[data.length - 1];
-  
+
   return {
-    "1M": +lastDay["V80691342"].v,
-    "3M": +lastDay["V80691344"].v,
-    "6M": +lastDay["V80691345"].v,
-    "1YR": +lastDay["V80691346"].v,
+    1: +lastDay["V80691342"].v,
+    3: +lastDay["V80691344"].v,
+    6: +lastDay["V80691345"].v,
+    12: +lastDay["V80691346"].v,
   };
 }
 
@@ -42,5 +43,12 @@ async function getInterestRates() {
   const bills = await getBillYields();
   return { ...bonds, ...bills };
 }
+
+// const printRates = async () => {
+//   const rates = await getInterestRates();
+//   console.log(rates);
+// };
+
+// printRates();
 
 module.exports = { getInterestRates };

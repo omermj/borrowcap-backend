@@ -46,3 +46,7 @@ INSERT INTO active_requests (borrower_id, amt_requested, purpose_id,
   VALUES
   (2, 5000, 2, '2023/09/27', 0.084, 24, 226.14),
   (2, 10000, 3, '2023/09/28', 0.094, 36, 319.86);
+
+-- FEED TERMS
+INSERT INTO terms (months)
+  VALUES (6), (12), (24), (36), (48), (60)

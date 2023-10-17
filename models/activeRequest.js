@@ -8,10 +8,11 @@ const {
   BadRequestError,
   UnauthorizedError,
 } = require("../expressError");
-const { FUNDING_DAYS } = require("../config");
+const { FUNDING_DAYS, PROFIT_MARGIN } = require("../config");
 const CancelledRequest = require("./cancelledRequest");
 const CancellationReason = require("./cancellationReason");
 const ApprovedRequest = require("./approvedRequest");
+const { getInterestRates } = require("../helpers/interestRate");
 
 /** Database Model: Active Loan Requests */
 
@@ -22,7 +23,9 @@ class ActiveRequest {
     const date = new Date().toUTCString();
 
     // Get interest rate
-    const interestRate = 0.089;
+    const interestRates = await getInterestRates();
+    const interestRate = interestRates[term] / 100 + PROFIT_MARGIN;
+    console.log(interestRate);
 
     // Calculate installment amount
     const pmt = this.calculatePayment(amtRequested, interestRate / 12, term);

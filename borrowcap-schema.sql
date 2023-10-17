@@ -126,3 +126,7 @@ CREATE TABLE paidoff_loans (
   installment_amt NUMERIC NOT NULL,
   FOREIGN KEY (borrower_id) REFERENCES users (id) ON DELETE SET NULL
 );
+
+CREATE TABLE terms (
+  months INTEGER PRIMARY KEY NOT NULL
+);

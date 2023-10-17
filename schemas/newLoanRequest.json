@@ -16,8 +16,7 @@
       "type": "integer"
     },
     "term": {
-      "type": "integer",
-      "minimum": 1
+      "type": "string"
     }
   }
 }
