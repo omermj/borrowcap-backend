@@ -238,8 +238,20 @@ class User {
     return user;
   }
 
-  /** Authenticates user using username and password provided */
+  /** Update password */
+  static async updatePassword(username, currentPassword, newPassword) {
+    // validate current password
+    const validate = await this.authenticate(username, currentPassword);
+    if (!validate) throw new UnauthorizedError("Invalid username/password");
 
+    // change password
+    const user = await this.update(username, { password: newPassword });
+    if (!user) throw new ExpressError("Error updating password");
+
+    return user;
+  }
+
+  /** Authenticates user using username and password provided */
   static async authenticate(username, password) {
     // get user
     const result = await db.query(

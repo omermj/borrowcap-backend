@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "http://example.com/example.json",
+  "type": "object",
+  "default": {},
+  "title": "Root Schema",
+  "required": [
+    "username",
+    "firstName",
+    "lastName",
+    "email",
+    "annualIncome",
+    "otherMonthlyDebt"
+  ],
+  "properties": {
+    "username": {
+      "type": "string",
+      "default": "",
+      "minLength": 1,
+      "examples": ["testuser2"]
+    }
+  },
+  "firstName": {
+    "type": "string",
+    "default": "",
+    "minLength": 1,
+    "examples": ["Test"]
+  },
+  "lastName": {
+    "type": "string",
+    "default": "",
+    "minLength": 1,
+    "examples": ["User"]
+  },
+  "email": {
+    "type": "string",
+    "default": "",
+    "minLength": 1,
+    "format": "email",
+    "examples": ["testuser1@email.com"]
+  },
+  "annualIncome": {
+    "type": "number",
+    "default": 0,
+    "minimum": 0,
+    "examples": [10000]
+  },
+  "otherMonthlyDebt": {
+    "type": "number",
+    "default": 0,
+    "minimum": 0,
+    "examples": [10000]
+  }
+}

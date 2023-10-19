@@ -2,6 +2,8 @@ const express = require("express");
 const User = require("../models/user");
 const jsonschema = require("jsonschema");
 const userAddSchema = require("../schemas/userAdd.json");
+const userUpdateSchema = require("../schemas/userUpdate.json");
+const changePasswordSchema = require("../schemas/changePassword.json");
 const { BadRequestError } = require("../expressError");
 const {
   ensureAdmin,
@@ -36,6 +38,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+/** Get a single user from database */
 router.get("/:username", correctUserOrAdmin, async (req, res, next) => {
   try {
     const user = await User.getByUsername(req.params.username);
@@ -45,23 +48,54 @@ router.get("/:username", correctUserOrAdmin, async (req, res, next) => {
   }
 });
 
+/** Delete user */
 router.delete("/:username", async (req, res, next) => {
   try {
-    await User.delete(req.params.username);
+    const result = await User.delete(req.params.username);
     return res.json({ message: `deteled ${req.params.username}` });
   } catch (e) {
     return next(e);
   }
 });
 
+/** Update user information in database. Not used to update password */
 router.patch("/:username", correctUserOrAdmin, async (req, res, next) => {
   try {
+    if (req.body.password) delete req.body.password;
+    const validator = jsonschema.validate(req.body, userUpdateSchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map((e) => e.stack);
+      throw new BadRequestError(errs);
+    }
     const user = await User.update(req.body.username, req.body);
     return res.json({ user });
   } catch (e) {
     return next(e);
   }
 });
+
+/** Update user password */
+router.patch(
+  "/:username/changepassword",
+  correctUserOrAdmin,
+  async (req, res, next) => {
+    try {
+      const validator = jsonschema.validate(req.body, changePasswordSchema);
+      if (!validator.valid) {
+        const errs = validator.errors.map((e) => e.stack);
+        throw new BadRequestError(errs);
+      }
+      const user = await User.updatePassword(
+        req.params.username,
+        req.body.currentPassword,
+        req.body.newPassword
+      );
+      return res.json({ user });
+    } catch (e) {
+      return next(e);
+    }
+  }
+);
 
 /** Get Active Requests for Borrower */
 router.get("/:id/activerequests", async (req, res, next) => {
