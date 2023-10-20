@@ -13,10 +13,12 @@
       "minimum": 1
     },
     "purposeId": {
-      "type": "integer"
+      "type": "integer",
+      "minimum": 1
     },
     "term": {
-      "type": "string"
+      "type": "string",
+      "enum": ["6", "12", "24", "36", "48", "60"]
     }
   }
 }

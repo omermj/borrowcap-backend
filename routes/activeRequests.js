@@ -25,12 +25,13 @@ router.get("/", async (req, res, next) => {
 
 /** Create new loan request */
 router.post("/", async (req, res, next) => {
-  console.log("inside route");
   try {
+    console.log("data", req.body);
     // validate req.body
     const validator = jsonschema.validate(req.body, newLoanSchema);
     if (!validator.valid) {
       const errs = validator.errors.map((e) => e.stack);
+      console.log(validator.errors);
       throw new BadRequestError(errs);
     }
     // check if userId(borrowerId) has borrower role
