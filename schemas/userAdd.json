@@ -19,30 +19,35 @@
       "type": "string",
       "default": "",
       "minLength": 1,
+      "maxLength": 25,
       "examples": ["testuser2"]
     },
     "password": {
       "type": "string",
       "default": "",
       "minLength": 6,
+      "maxLength": 255,
       "examples": ["pass"]
     },
     "firstName": {
       "type": "string",
       "default": "",
       "minLength": 1,
+      "maxLength": 255,
       "examples": ["Test"]
     },
     "lastName": {
       "type": "string",
       "default": "",
       "minLength": 1,
+      "maxLength": 255,
       "examples": ["User"]
     },
     "email": {
       "type": "string",
       "default": "",
       "minLength": 1,
+      "maxLength": 255,
       "format": "email",
       "examples": ["testuser1@email.com"]
     },
@@ -61,6 +66,7 @@
     "roles": {
       "type": "array",
       "default": [],
+      "minItems": 1,
       "items": {
         "type": "string",
         "examples": ["admin", "investor"]
