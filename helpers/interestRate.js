@@ -44,11 +44,11 @@ async function getInterestRates() {
   return { ...bonds, ...bills };
 }
 
-// const printRates = async () => {
-//   const rates = await getInterestRates();
-//   console.log(rates);
-// };
+const printRates = async () => {
+  const rates = await getBondYields();
+  console.log(rates);
+};
 
-// printRates();
+printRates();
 
 module.exports = { getInterestRates };

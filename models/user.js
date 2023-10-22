@@ -116,7 +116,6 @@ class User {
       ORDER BY id
       `
     );
-    console.log(process.env.NODE_ENV);
     return result.rows;
   }
 

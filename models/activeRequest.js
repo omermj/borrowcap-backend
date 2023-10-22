@@ -13,6 +13,7 @@ const CancelledRequest = require("./cancelledRequest");
 const CancellationReason = require("./cancellationReason");
 const ApprovedRequest = require("./approvedRequest");
 const { getInterestRates } = require("../helpers/interestRate");
+const { DatabaseError } = require("pg");
 
 /** Database Model: Active Loan Requests */
 
@@ -30,31 +31,35 @@ class ActiveRequest {
     // Calculate installment amount
     const pmt = this.calculatePayment(amtRequested, interestRate / 12, term);
 
-    const result = await db.query(
-      `
-    INSERT INTO active_requests
-      (borrower_id,
-        amt_requested,
-        purpose_id,
-        app_open_date,
-        interest_rate,
-        term,
-        installment_amt)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING
-        id,
-        borrower_id AS "borrowerId",
-        amt_requested AS "amtRequested",
-        purpose_id AS "purposeId",
-        app_open_date AS "appOpenDate",
-        interest_rate AS "interestRate",
-        term,
-        installment_amt AS "installmentAmt"
-    `,
-      [borrowerId, amtRequested, purposeId, date, interestRate, term, pmt]
-    );
+    try {
+      const result = await db.query(
+        `
+      INSERT INTO active_requests
+        (borrower_id,
+          amt_requested,
+          purpose_id,
+          app_open_date,
+          interest_rate,
+          term,
+          installment_amt)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING
+          id,
+          borrower_id AS "borrowerId",
+          amt_requested AS "amtRequested",
+          purpose_id AS "purposeId",
+          app_open_date AS "appOpenDate",
+          interest_rate AS "interestRate",
+          term,
+          installment_amt AS "installmentAmt"
+      `,
+        [borrowerId, amtRequested, purposeId, date, interestRate, term, pmt]
+      );
 
-    return result.rows[0];
+      return result.rows[0];
+    } catch (e) {
+      throw new DatabaseError();
+    }
   }
 
   /** Get all Active Requests in the database */

@@ -31,5 +31,8 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "axios-mock-adapter": "^1.22.0"
   }
 }
