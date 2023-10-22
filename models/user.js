@@ -113,10 +113,10 @@ class User {
         annual_income AS "annualIncome",
         other_monthly_debt AS "otherMonthlyDebt"
       FROM users
-      ORDER BY username
+      ORDER BY id
       `
     );
-
+    console.log(process.env.NODE_ENV);
     return result.rows;
   }
 
@@ -200,6 +200,9 @@ class User {
    * @throws {NotFoundError} if username does not exist
    */
   static async update(username, data) {
+    // bad request error if there is no data
+    if (!data) throw new BadRequestError("Data is required");
+
     // handle password update
     if (data.password) {
       data.password = await bcrypt.hash(data.password, BCRYPT_WORK_FACTOR);
@@ -307,12 +310,16 @@ class User {
       }
       return { ...user, roles };
     } catch (e) {
-      throw new ExpressError(e.message);
+      throw new BadRequestError("Incorrect role(s)");
     }
   }
 
   // Get roles assigned to user given userId
   static async getRoles(userId) {
+    // check if userId is valid
+    const user = await db.query(`SELECT id FROM users WHERE id = $1`, [userId]);
+    if (!user.rows[0]) throw new NotFoundError(`No user with id: ${userId}`);
+
     const result = await db.query(
       `
       SELECT name FROM roles

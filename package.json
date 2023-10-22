@@ -5,8 +5,17 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "NODE_ENV=development nodemon server.js",
     "test": "jest -i"
+  },
+  "jest": {
+    "testMatch": [
+      "**/__tests__/**/*.tests.js"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "config.js"
+    ]
   },
   "keywords": [],
   "author": "",
