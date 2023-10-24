@@ -26,7 +26,6 @@ class ActiveRequest {
     // Get interest rate
     const interestRates = await getInterestRates();
     const interestRate = interestRates[term] / 100 + PROFIT_MARGIN;
-    console.log(interestRate);
 
     // Calculate installment amount
     const pmt = this.calculatePayment(amtRequested, interestRate / 12, term);
@@ -123,6 +122,12 @@ class ActiveRequest {
    */
 
   static async update(id, data) {
+    // validate data
+    const allowedKeys = ["amtRequested", "purposeId", "interestRate", "term"];
+    if (!Object.keys(data).every((el) => allowedKeys.includes(el))) {
+      throw new BadRequestError("Invalid data for update");
+    }
+
     // generate SQL query
     const { cols, values } = generateUpdateQuery(data, {
       amtRequested: "amt_requested",
@@ -145,11 +150,36 @@ class ActiveRequest {
         installment_amt AS "installmentAmt"
     `;
 
-    const result = await db.query(sqlQuery, [...values, id]);
-    const activeRequest = result.rows[0];
+    let result = await db.query(sqlQuery, [...values, id]);
+    let activeRequest = result.rows[0];
 
     if (!activeRequest)
       throw new NotFoundError(`No Active Request exists with id: ${id}`);
+
+    // recalculate and update installmentAmt
+    const pmt = this.calculatePayment(
+      activeRequest.amtRequested,
+      activeRequest.interestRate / 12,
+      activeRequest.term
+    );
+    result = await db.query(
+      `
+      UPDATE active_requests
+        SET installment_amt = $1
+        WHERE id = $2
+        RETURNING
+        id,
+        borrower_id AS "borrowerId",
+        amt_requested AS "amtRequested",
+        purpose_id AS "purposeId",
+        app_open_date AS "appOpenDate",
+        interest_rate AS "interestRate",
+        term,
+        installment_amt AS "installmentAmt"
+    `,
+      [pmt, id]
+    );
+    activeRequest = result.rows[0];
 
     return activeRequest;
   }
@@ -173,8 +203,11 @@ class ActiveRequest {
 
   //** Approve Active Request */
   static async approve(id, data) {
+    if (!this.validateApprovalData(data)) throw new BadRequestError();
+
     const activeRequest = await ActiveRequest.get(id);
     const { interestRate, amtApproved, term } = data;
+    data.term = String(data.term);
 
     // Get approval date
     const appApprovedDate = new Date().toUTCString();
@@ -185,6 +218,8 @@ class ActiveRequest {
       FUNDING_DAYS
     );
 
+    try {
+    } catch (e) {}
     // Calculate installment amount
     const pmt = this.calculatePayment(amtApproved, interestRate / 12, term);
 
@@ -213,7 +248,10 @@ class ActiveRequest {
   }
 
   static calculatePayment(pv, r, n) {
-    return ((pv * r) / (1 - (1 + r) ** -n)).toFixed(2);
+    const pmt = +((pv * r) / (1 - (1 + r) ** -n)).toFixed(2);
+    console.log(pmt);
+    if (isNaN(+pmt)) throw new BadRequestError("Invalid parameters");
+    return pmt;
   }
 
   static getFundingDeadline(approvalDate, days) {
@@ -250,6 +288,26 @@ class ActiveRequest {
       ActiveRequest.delete(id);
       return true;
     } else return false;
+  }
+
+  static validateApprovalData(data) {
+    if (!data.interestRate || !data.amtApproved || !data.term) {
+      return false;
+    }
+    if (
+      isNaN(+data.interestRate) ||
+      +data.interestRate < 0.00001 ||
+      +data.interestRate > 1
+    ) {
+      return false;
+    }
+    if (isNaN(+data.amtApproved) || +data.amtApproved < 1) {
+      return false;
+    }
+    if (!["6", "12", "24", "36", "48", "60"].includes(String(data.term))) {
+      return false;
+    }
+    return true;
   }
 }
 
