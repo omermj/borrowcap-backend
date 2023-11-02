@@ -97,62 +97,6 @@ router.patch(
   }
 );
 
-/** Get Active Requests for Borrower */
-router.get("/:id/activerequests", async (req, res, next) => {
-  try {
-    const activeRequests = await User.getActiveRequests(req.params.id);
-    return res.json({ activeRequests });
-  } catch (e) {
-    return next(e);
-  }
-});
-
-/** Get Funded Loans for Borrower */
-router.get("/:id/fundedloans", async (req, res, next) => {
-  try {
-    const fundedLoans = await User.getFundedLoansForBorrower(req.params.id);
-    return res.json({ fundedLoans });
-  } catch (e) {
-    return next(e);
-  }
-});
-
-/** Get Approved Requests for Borrower */
-router.get("/:id/approvedrequests", async (req, res, next) => {
-  try {
-    const approvedRequests = await User.getApprovedRequestsForBorrower(
-      req.params.id
-    );
-    return res.json({ approvedRequests });
-  } catch (e) {
-    return next(e);
-  }
-});
-
-/** Get Active Investments for Investors */
-router.get("/:id/activeinvestments", async (req, res, next) => {
-  try {
-    const activeInvestments = await User.getActiveInvestmentsForInvestor(
-      req.params.id
-    );
-    return res.json({ activeInvestments });
-  } catch (e) {
-    return next(e);
-  }
-});
-
-/** Get Pledged Investments for Investors */
-router.get("/:id/pledgedinvestments", async (req, res, next) => {
-  try {
-    const pledgedInvestments = await User.getPledgedInvestmentsForInvestor(
-      req.params.id
-    );
-    return res.json({ pledgedInvestments });
-  } catch (e) {
-    return next(e);
-  }
-});
-
 /** Deposit Funds in User's Account Balance */
 router.patch("/:id/deposit", async (req, res, next) => {
   try {

@@ -84,4 +84,16 @@ router.patch("/:id/fund", async (req, res, next) => {
   }
 });
 
+/** Get Approved Requests for Borrower */
+router.get("/users/:id", async (req, res, next) => {
+  try {
+    const approvedRequests = await ApprovedRequest.getApprovedRequestsByUserId(
+      req.params.id
+    );
+    return res.json({ approvedRequests });
+  } catch (e) {
+    return next(e);
+  }
+});
+
 module.exports = router;

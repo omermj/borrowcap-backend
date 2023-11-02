@@ -243,6 +243,59 @@ class FundedLoan {
       await User.depositFunds(investment.investorId, amtToDeposit);
     });
   }
+
+  /** Get Funded Loans for a given User Id */
+  static async getFundedLoansByUserId(id) {
+    // Check if User Id exists
+    const user = await User.get(id);
+    if (!user) throw new NotFoundError(`No user with id: ${id}`);
+
+    // Add condition to check if user is both borrower or investor when
+    // multi-role feature is implemented
+
+    // if borrower
+    if (user.roles.includes("borrower")) {
+      const result = await db.query(
+        `SELECT 
+          f.id,
+          f.amt_funded AS "amtFunded",
+          f.funded_date AS "fundedDate",
+          f.interest_rate AS "interestRate",
+          f.term,
+          f.installment_amt AS "installmentAmt",
+          f.remaining_balance AS "remainingBalance"
+        FROM funded_loans AS "f"
+        WHERE f.borrower_id = $1
+        ORDER BY f.id`,
+        [id]
+      );
+      return { borrower: result.rows };
+    }
+    // if investor
+    else if (user.roles.includes("investor")) {
+      const result = await db.query(
+        `SELECT 
+          f.id,
+          l.invested_amt AS "amtInvested",
+          f.amt_funded AS "amtFunded",
+          f.funded_date AS "fundedDate",
+          f.interest_rate AS "interestRate",
+          f.term,
+          f.installment_amt AS "installmentAmt",
+          f.remaining_balance AS "remainingBalance"
+        FROM funded_loans AS "f"
+        JOIN funded_loans_investors AS "l" ON f.id = l.loan_id
+        WHERE l.investor_id = $1
+        ORDER BY f.id`,
+        [id]
+      );
+      return { investor: result.rows };
+    }
+    // not investor or borrower
+    else {
+      throw new BadRequestError("Incorrect user role");
+    }
+  }
 }
 
 module.exports = FundedLoan;

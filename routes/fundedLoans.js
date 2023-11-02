@@ -38,4 +38,15 @@ router.patch("/pay/:id", async (req, res, next) => {
     return next(e);
   }
 });
+
+/** Get Funded Loans for User (Borrower and Investor) */
+router.get("/users/:id", async (req, res, next) => {
+  try {
+    const fundedLoans = await FundedLoan.getFundedLoansByUserId(req.params.id);
+    return res.json({ fundedLoans });
+  } catch (e) {
+    return next(e);
+  }
+});
+
 module.exports = router;

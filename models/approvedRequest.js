@@ -418,6 +418,65 @@ class ApprovedRequest {
     );
     return result.rows;
   }
+
+  /** Get Approved Requests for a given UserId
+   * - Approved Request for Borrower
+   * - Pledged Investment for Investor
+   */
+  static async getApprovedRequestsByUserId(id) {
+    // Check if User Id exists
+    const user = await User.get(id);
+    if (!user) throw new NotFoundError(`No user with id: ${id}`);
+
+    // Add condition to check if user is both borrower or investor when
+    // multi-role feature is implemented
+
+    // if borrower
+    if (user.roles.includes("borrower")) {
+      const result = await db.query(
+        `SELECT 
+          r.id,
+          r.amt_requested AS "amtRequested",
+          r.amt_approved AS "amtApproved",
+          r.amt_funded AS "amtFunded",
+          p.title AS "purpose",
+          r.app_open_date AS "appOpenDate",
+          r.app_approved_date AS "appApprovedDate",
+          r.funding_deadline AS "fundingDeadline",
+          r.interest_rate AS "interestRate",
+          r.term,
+          r.installment_amt AS "installmentAmt",
+          r.available_for_funding AS "availableForFunding"
+        FROM approved_requests AS "r"
+        JOIN purpose AS "p" ON p.id = r.purpose_id
+        WHERE r.borrower_id = $1 AND r.is_funded = $2`,
+        [id, false]
+      );
+      return { borrower: result.rows };
+    }
+    // if investor
+    else if (user.roles.includes("investor")) {
+      const result = await db.query(
+        `SELECT
+          r.id AS "id",
+          r.amt_approved AS "amtApproved",
+          i.pledged_amt AS "amtPledged",
+          r.app_approved_date AS "approvedDate",
+          r.funding_deadline AS "fundingDeadline",
+          r.interest_rate AS "interestRate",
+          r.term AS "term"
+        FROM approved_requests AS "r"
+        JOIN approved_requests_investors AS "i" ON i.request_id = r.id
+        WHERE i.investor_id = $1`,
+        [id]
+      );
+      return { investor: result.rows };
+    }
+    // not investor or borrower
+    else {
+      throw new BadRequestError("Incorrect user role");
+    }
+  }
 }
 
 module.exports = ApprovedRequest;

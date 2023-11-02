@@ -117,4 +117,14 @@ router.patch("/:id/reject", async (req, res, next) => {
   }
 });
 
+/** Get Active Requests for Borrower */
+router.get("/users/:id", async (req, res, next) => {
+  try {
+    const activeRequests = await ActiveRequest.getActiveRequests(req.params.id);
+    return res.json({ activeRequests });
+  } catch (e) {
+    return next(e);
+  }
+});
+
 module.exports = router;
