@@ -312,7 +312,7 @@ class ActiveRequest {
   }
 
   /** Get Active Requests for a given BorrowerId */
-  static async getActiveRequests(id) {
+  static async getByBorrowerId(id) {
     // Check if BorrowerId exists
     const borrower = await User.get(id);
     if (!borrower) throw new NotFoundError(`No borrower with id: ${id}`);

@@ -7,13 +7,15 @@ const changePasswordSchema = require("../schemas/changePassword.json");
 const { BadRequestError } = require("../expressError");
 const {
   ensureAdmin,
-  correctUserOrAdmin,
-  ensureLoggedIn,
+  ensureAuthorizedUserOrAdmin,
+  ensureAuthorizedUser,
 } = require("../middleware/auth");
 
 const router = express.Router();
 //ensureAdmin
-router.get("/", async (req, res, next) => {
+
+/** Get all users from db */
+router.get("/", ensureAdmin, async (req, res, next) => {
   try {
     const users = await User.getAll();
     return res.json({ users });
@@ -24,7 +26,7 @@ router.get("/", async (req, res, next) => {
 
 /** Add new user in database. Only for admins. */
 //ensureAdmin
-router.post("/", async (req, res, next) => {
+router.post("/", ensureAdmin, async (req, res, next) => {
   try {
     const validator = jsonschema.validate(req.body, userAddSchema);
     if (!validator.valid) {
@@ -39,17 +41,21 @@ router.post("/", async (req, res, next) => {
 });
 
 /** Get a single user from database */
-router.get("/:username", correctUserOrAdmin, async (req, res, next) => {
-  try {
-    const user = await User.getByUsername(req.params.username);
-    return res.json({ user });
-  } catch (e) {
-    return next(e);
+router.get(
+  "/:username",
+  ensureAuthorizedUserOrAdmin,
+  async (req, res, next) => {
+    try {
+      const user = await User.getByUsername(req.params.username);
+      return res.json({ user });
+    } catch (e) {
+      return next(e);
+    }
   }
-});
+);
 
 /** Delete user */
-router.delete("/:username", async (req, res, next) => {
+router.delete("/:username", ensureAdmin, async (req, res, next) => {
   try {
     const result = await User.delete(req.params.username);
     return res.json({ message: `deteled ${req.params.username}` });
@@ -59,25 +65,29 @@ router.delete("/:username", async (req, res, next) => {
 });
 
 /** Update user information in database. Not used to update password */
-router.patch("/:username", correctUserOrAdmin, async (req, res, next) => {
-  try {
-    if (req.body.password) delete req.body.password;
-    const validator = jsonschema.validate(req.body, userUpdateSchema);
-    if (!validator.valid) {
-      const errs = validator.errors.map((e) => e.stack);
-      throw new BadRequestError(errs);
+router.patch(
+  "/:username",
+  ensureAuthorizedUserOrAdmin,
+  async (req, res, next) => {
+    try {
+      if (req.body.password) delete req.body.password;
+      const validator = jsonschema.validate(req.body, userUpdateSchema);
+      if (!validator.valid) {
+        const errs = validator.errors.map((e) => e.stack);
+        throw new BadRequestError(errs);
+      }
+      const user = await User.update(req.body.username, req.body);
+      return res.json({ user });
+    } catch (e) {
+      return next(e);
     }
-    const user = await User.update(req.body.username, req.body);
-    return res.json({ user });
-  } catch (e) {
-    return next(e);
   }
-});
+);
 
 /** Update user password */
 router.patch(
   "/:username/changepassword",
-  correctUserOrAdmin,
+  ensureAuthorizedUserOrAdmin,
   async (req, res, next) => {
     try {
       const validator = jsonschema.validate(req.body, changePasswordSchema);
@@ -98,7 +108,7 @@ router.patch(
 );
 
 /** Deposit Funds in User's Account Balance */
-router.patch("/:id/deposit", async (req, res, next) => {
+router.patch("/:id/deposit", ensureAuthorizedUser, async (req, res, next) => {
   try {
     if (!req.body.amount) throw new BadRequestError("Amount is required.");
     const accountBalance = await User.depositFunds(
@@ -112,7 +122,7 @@ router.patch("/:id/deposit", async (req, res, next) => {
 });
 
 /** Withdraw Funds from User's Account Balance */
-router.patch("/:id/withdraw", async (req, res, next) => {
+router.patch("/:id/withdraw", ensureAuthorizedUser, async (req, res, next) => {
   try {
     if (!req.body.amount) throw new BadRequestError("Amount is required.");
     const accountBalance = await User.withdrawFunds(

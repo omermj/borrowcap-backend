@@ -10,11 +10,17 @@ const approveLoanSchema = require("../schemas/approveLoanRequest.json");
 const { BadRequestError } = require("../expressError");
 const ActiveRequest = require("../models/activeRequest");
 const User = require("../models/user");
+const {
+  ensureAdmin,
+  ensureAuthorizedUserOrAdmin,
+  ensureAuthorizedUser,
+  ensureLoggedIn,
+} = require("../middleware/auth");
 
 const router = express.Router();
 
-/** Get all loans */
-router.get("/", async (req, res, next) => {
+/** Get all activeRequests */
+router.get("/", ensureAdmin, async (req, res, next) => {
   try {
     const activeRequests = await ActiveRequest.getAll();
     return res.json({ activeRequests });
@@ -23,8 +29,32 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-/** Create new loan request */
-router.post("/", async (req, res, next) => {
+/** Given activeRequest id, return activeRequest data */
+router.get("/:id", ensureAdmin, async (req, res, next) => {
+  try {
+    const activeRequest = await ActiveRequest.get(req.params.id);
+    return res.json({ activeRequest });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+/** Get all activeRequest given BorrowerId */
+router.get(
+  "/users/:id",
+  ensureAuthorizedUserOrAdmin,
+  async (req, res, next) => {
+    try {
+      const activeRequests = await ActiveRequest.getByBorrowerId(req.params.id);
+      return res.json({ activeRequests });
+    } catch (e) {
+      return next(e);
+    }
+  }
+);
+
+/** Create new activeRequest */
+router.post("/", ensureLoggedIn, async (req, res, next) => {
   try {
     console.log("data", req.body);
     // validate req.body
@@ -46,18 +76,8 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-/** Given id, return loan request data */
-router.get("/:id", async (req, res, next) => {
-  try {
-    const activeRequest = await ActiveRequest.get(req.params.id);
-    return res.json({ activeRequest });
-  } catch (e) {
-    return next(e);
-  }
-});
-
-/** Update loan request */
-router.patch("/:id", async (req, res, next) => {
+/** Update activeRequest */
+router.patch("/:id", ensureAdmin, async (req, res, next) => {
   try {
     // validate req.body
     const validator = jsonschema.validate(req.body, updateLoanSchema);
@@ -72,8 +92,8 @@ router.patch("/:id", async (req, res, next) => {
   }
 });
 
-/** Delete loan request */
-router.delete("/:id", async (req, res, next) => {
+/** Delete activeRequest */
+router.delete("/:id", ensureAdmin, async (req, res, next) => {
   try {
     const result = ActiveRequest.delete(req.params.id);
     if (result) {
@@ -86,8 +106,8 @@ router.delete("/:id", async (req, res, next) => {
   }
 });
 
-/** Approve loan request */
-router.patch("/:id/approve", async (req, res, next) => {
+/** Approve activeRequest (Underwriter only) */
+router.patch("/:id/approve", ensureAdmin, async (req, res, next) => {
   try {
     // validate JSON request data (interest rate and approved amt)
     const validator = jsonschema.validate(req.body, approveLoanSchema);
@@ -105,23 +125,13 @@ router.patch("/:id/approve", async (req, res, next) => {
   }
 });
 
-/** Reject loan request */
-router.patch("/:id/reject", async (req, res, next) => {
+/** Reject loan request (Underwriter only) */
+router.patch("/:id/reject", ensureAdmin, async (req, res, next) => {
   try {
     const rejectedRequest = await ActiveRequest.reject(req.params.id);
     if (rejectedRequest)
       return res.json({ message: "Active Request is rejected." });
     else return res.json({ message: "Approved Request was not rejected." });
-  } catch (e) {
-    return next(e);
-  }
-});
-
-/** Get Active Requests for Borrower */
-router.get("/users/:id", async (req, res, next) => {
-  try {
-    const activeRequests = await ActiveRequest.getActiveRequests(req.params.id);
-    return res.json({ activeRequests });
   } catch (e) {
     return next(e);
   }

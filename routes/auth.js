@@ -4,7 +4,6 @@
 
 const express = require("express");
 const jsonschema = require("jsonschema");
-
 const userLoginSchema = require("../schemas/userLogin.json");
 const userAddSchema = require("../schemas/userAdd.json");
 const { BadRequestError } = require("../expressError");
