@@ -399,7 +399,6 @@ class ApprovedRequest {
   }
 
   static async getAvailable() {
-    console.log("In model");
     const result = await db.query(
       `
       SELECT r.id,
