@@ -83,6 +83,37 @@ describe("get", () => {
   });
 });
 
+describe("getByBorrowerId", () => {
+  test("works", async () => {
+    const activeRequests = await ActiveRequest.getByBorrowerId(2);
+    await expect(activeRequests).toEqual([
+      {
+        id: 1,
+        amtRequested: "5000",
+        purpose: "Car",
+        appOpenDate: new Date("2023/09/27"),
+        interestRate: "0.084",
+        term: 24,
+        installmentAmt: "226.14",
+      },
+      {
+        id: 2,
+        amtRequested: "10000",
+        purpose: "Education",
+        appOpenDate: new Date("2023/09/28"),
+        interestRate: "0.094",
+        term: 36,
+        installmentAmt: "319.86",
+      },
+    ]);
+  });
+  test("throw error on incorrect borrower id", async () => {
+    await expect(ActiveRequest.getByBorrowerId(100)).rejects.toThrow(
+      NotFoundError
+    );
+  });
+});
+
 describe("create", () => {
   const requestData = {
     borrowerId: 2,

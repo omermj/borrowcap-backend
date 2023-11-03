@@ -63,7 +63,6 @@ class ActiveRequest {
   }
 
   /** Get all Active Requests in the database */
-
   static async getAll() {
     const result = await db.query(`
       SELECT 
@@ -84,7 +83,6 @@ class ActiveRequest {
   }
 
   /** Get specific Active Request from the database, given id */
-
   static async get(id) {
     const result = await db.query(
       `
@@ -116,6 +114,29 @@ class ActiveRequest {
     if (!activeRequest)
       throw new NotFoundError(`No Active Request exists with id: ${id}`);
     return activeRequest;
+  }
+
+  /** Get Active Requests for a given BorrowerId */
+  static async getByBorrowerId(id) {
+    // Check if BorrowerId exists
+    const borrower = await User.get(id);
+    if (!borrower) throw new NotFoundError(`No borrower with id: ${id}`);
+
+    const result = await db.query(
+      `SELECT 
+        r.id,
+        r.amt_requested AS "amtRequested",
+        p.title AS "purpose",
+        r.app_open_date AS "appOpenDate",
+        r.interest_rate AS "interestRate",
+        r.term,
+        r.installment_amt as "installmentAmt"
+      FROM active_requests AS "r"
+      JOIN purpose AS "p" ON p.id = r.purpose_id
+      WHERE r.borrower_id = $1`,
+      [id]
+    );
+    return result.rows;
   }
 
   /** Update Active Request, given id and data
@@ -309,31 +330,6 @@ class ActiveRequest {
       return false;
     }
     return true;
-  }
-
-  /** Get Active Requests for a given BorrowerId */
-  static async getByBorrowerId(id) {
-    // Check if BorrowerId exists
-    const borrower = await User.get(id);
-    if (!borrower) throw new NotFoundError(`No borrower with id: ${id}`);
-
-    const result = await db.query(
-      `
-  SELECT 
-    r.id,
-    r.amt_requested AS "amtRequested",
-    p.title AS "purpose",
-    r.app_open_date AS "appOpenDate",
-    r.interest_rate AS "interestRate",
-    r.term,
-    r.installment_amt as "installmentAmt"
-  FROM active_requests AS "r"
-  JOIN purpose AS "p" ON p.id = r.purpose_id
-  WHERE r.borrower_id = $1
-  `,
-      [id]
-    );
-    return result.rows;
   }
 }
 
