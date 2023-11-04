@@ -14,6 +14,7 @@ const {
   commonBeforeAll,
   commonBeforeEach,
 } = require("./_testCommon");
+const { DatabaseError } = require("pg");
 
 // setup before/after commands
 beforeAll(commonBeforeAll);
@@ -88,4 +89,150 @@ describe("get", () => {
   test("throw error on incorrect id", async () => {
     await expect(ApprovedRequest.get(100)).rejects.toThrow(NotFoundError);
   });
+});
+
+describe("create", () => {
+  test("works", async () => {
+    const requestData = {
+      id: 5,
+      borrowerId: 2,
+      amtRequested: "10000",
+      amtApproved: "8000",
+      amtFunded: "0",
+      purposeId: 1,
+      appOpenDate: new Date("2023-09-01"),
+      appApprovedDate: new Date("2023-09-05"),
+      fundingDeadline: new Date("2023-10-05"),
+      interestRate: "0.05",
+      term: 36,
+      installmentAmt: "230",
+      availableForFunding: false,
+      isFunded: false,
+    };
+    const approvedRequest = await ApprovedRequest.create(requestData);
+    expect(approvedRequest).toEqual(requestData);
+  });
+  test("error on missing data", async () => {
+    const requestData = {
+      id: 5,
+      borrowerId: 2,
+      amtRequested: "10000",
+      amtApproved: "8000",
+      amtFunded: "0",
+      purposeId: 1,
+      appOpenDate: new Date("2023-09-01"),
+      appApprovedDate: new Date("2023-09-05"),
+      fundingDeadline: new Date("2023-10-05"),
+    };
+    await expect(ApprovedRequest.create(requestData)).rejects.toThrow(
+      BadRequestError
+    );
+  });
+});
+
+describe("update", () => {
+  test("works", async () => {
+    const updateData = {
+      interestRate: "0.06",
+      term: 36,
+    };
+    const approvedRequest = await ApprovedRequest.get(3);
+    delete approvedRequest.annualIncome;
+    delete approvedRequest.otherMonthlyDebt;
+    delete approvedRequest.purpose;
+    const updatedApprovedRequest = await ApprovedRequest.update(3, updateData);
+    expect(updatedApprovedRequest).toEqual({
+      ...approvedRequest,
+      ...updateData,
+      purposeId: 1,
+    });
+  });
+  test("throw error on incorrect data", async () => {
+    const updateDate = {
+      interestRate: "0.06",
+      borrowerId: 10,
+    };
+    await expect(ApprovedRequest.update(3, updateDate)).rejects.toThrow(
+      DatabaseError
+    );
+  });
+  test("throw error on incorrect app id", async () => {
+    await expect(ApprovedRequest.update(30, { term: 36 })).rejects.toThrow(
+      NotFoundError
+    );
+  });
+});
+
+describe("cancel", () => {
+  test("works", async () => {
+    //Number of approvedRequests before cancellation
+    let approvedRequests = await ApprovedRequest.getAll();
+    const numReqBeforeCancel = approvedRequests.length;
+
+    //cancel request
+    const response = await ApprovedRequest.cancel(3);
+
+    //Number of approvedRequests after cancellation
+    approvedRequests = await ApprovedRequest.getAll();
+    const numReqAfterCancel = approvedRequests.length;
+
+    expect(response).toBe(true);
+    expect(numReqAfterCancel).toEqual(numReqBeforeCancel - 1);
+  });
+  test("throw error on incorrect id", async () => {
+    await expect(ApprovedRequest.cancel(30)).rejects.toThrow(NotFoundError);
+  });
+});
+
+describe("enableFunding", () => {
+  test("works", async () => {
+    const response = await ApprovedRequest.enableFunding(3);
+    const approvedRequest = await ApprovedRequest.get(3);
+    expect(response).toBe(true);
+    expect(approvedRequest.availableForFunding).toBe(true);
+  });
+  test("throw error on incorrect id", async () => {
+    await expect(ApprovedRequest.enableFunding(30)).rejects.toThrow(
+      NotFoundError
+    );
+  });
+});
+
+describe("delete", () => {
+  test("works", async () => {
+    //Number of approvedRequests before cancellation
+    let approvedRequests = await ApprovedRequest.getAll();
+    const numReqBeforeDelete = approvedRequests.length;
+
+    //cancel request
+    const response = await ApprovedRequest.delete(3);
+
+    //Number of approvedRequests after cancellation
+    approvedRequests = await ApprovedRequest.getAll();
+    const numReqAfterDelete = approvedRequests.length;
+
+    expect(response).toBe(true);
+    expect(numReqAfterDelete).toEqual(numReqBeforeDelete - 1);
+  });
+  test("throw error on incorrect id", async () => {
+    await expect(ApprovedRequest.delete(30)).rejects.toThrow(NotFoundError);
+  });
+});
+
+describe("fund", () => {
+  test("throw error if approvedRequest is not available for funding", async () => {
+    await expect(ApprovedRequest.fund(3, 3, 5000)).rejects.toThrow(
+      ExpressError
+    );
+  });
+  test("throw error if amount is greater than investable amount", async () => {
+    await ApprovedRequest.enableFunding(3);
+    await expect(ApprovedRequest.fund(3, 3, 10000)).rejects.toThrow(
+      ExpressError
+    );
+  });
+  test("works - fully fund request if amount is equal to investable amount", async () => {
+    await ApprovedRequest.enableFunding(3);
+    
+  })
 });

@@ -11,6 +11,7 @@ const {
 } = require("../expressError");
 const FundedLoan = require("./fundedLoan");
 const User = require("./user");
+const { DatabaseError } = require("pg");
 
 /** Database Model: Approved Loan Requests */
 
@@ -146,7 +147,7 @@ class ApprovedRequest {
       );
       return result.rows[0];
     } catch (e) {
-      throw new ExpressError(`Database error: ${e}`);
+      throw new BadRequestError();
     }
   }
 
@@ -155,9 +156,16 @@ class ApprovedRequest {
     // generate SQL query
     const { cols, values } = generateUpdateQuery(data, {
       amtFunded: "amt_funded",
+      amtRequested: "amt_requested",
+      amtApproved: "amtApproved",
+      purposeId: "purpose_id",
+      appOpenDate: "app_open_date",
+      appApprovedDate: "app_approved_date",
+      fundingDeadline: "funding_deadline",
       installmentAmt: "installment_amt",
       availableForFunding: "available_for_funding",
       isFunded: "is_funded",
+      interestRate: "interest_rate",
     });
 
     const sqlQuery = `
