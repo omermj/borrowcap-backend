@@ -10,7 +10,7 @@
   },
   "jest": {
     "testMatch": [
-      "**/__tests__/**/*.tests.js"
+      "**/__tests__/**/*.test.js"
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
@@ -33,6 +33,7 @@
     "pg": "^8.11.3"
   },
   "devDependencies": {
-    "axios-mock-adapter": "^1.22.0"
+    "axios-mock-adapter": "^1.22.0",
+    "supertest": "^6.3.3"
   }
 }

@@ -271,7 +271,6 @@ class ActiveRequest {
 
   static calculatePayment(pv, r, n) {
     const pmt = +((pv * r) / (1 - (1 + r) ** -n)).toFixed(2);
-    console.log(pmt);
     if (isNaN(+pmt)) throw new BadRequestError("Invalid parameters");
     return pmt;
   }

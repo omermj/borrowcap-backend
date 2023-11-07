@@ -7,13 +7,13 @@ const {
   BadRequestError,
   UnauthorizedError,
   NotFoundError,
-} = require("../../../expressError");
+} = require("../../../expressError.js");
 const {
   commonAfterAll,
   commonAfterEach,
   commonBeforeAll,
   commonBeforeEach,
-} = require("./_testCommon");
+} = require("./_testCommon.js");
 
 beforeAll(commonBeforeAll);
 beforeEach(commonBeforeEach);

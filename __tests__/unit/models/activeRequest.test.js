@@ -7,13 +7,13 @@ const {
   BadRequestError,
   UnauthorizedError,
   NotFoundError,
-} = require("../../../expressError");
+} = require("../../../expressError.js");
 const {
   commonAfterAll,
   commonAfterEach,
   commonBeforeAll,
   commonBeforeEach,
-} = require("./_testCommon");
+} = require("./_testCommon.js");
 const { DatabaseError } = require("pg");
 const { getInterestRates } = require("../../../helpers/interestRate.js");
 const ApprovedRequest = require("../../../models/approvedRequest.js");

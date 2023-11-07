@@ -24,6 +24,20 @@ router.get("/", ensureAdmin, async (req, res, next) => {
   }
 });
 
+/** Get a single user from database */
+router.get(
+  "/:username",
+  ensureAuthorizedUserOrAdmin,
+  async (req, res, next) => {
+    try {
+      const user = await User.getByUsername(req.params.username);
+      return res.json({ user });
+    } catch (e) {
+      return next(e);
+    }
+  }
+);
+
 /** Add new user in database. Only for admins. */
 //ensureAdmin
 router.post("/", ensureAdmin, async (req, res, next) => {
@@ -39,20 +53,6 @@ router.post("/", ensureAdmin, async (req, res, next) => {
     return next(e);
   }
 });
-
-/** Get a single user from database */
-router.get(
-  "/:username",
-  ensureAuthorizedUserOrAdmin,
-  async (req, res, next) => {
-    try {
-      const user = await User.getByUsername(req.params.username);
-      return res.json({ user });
-    } catch (e) {
-      return next(e);
-    }
-  }
-);
 
 /** Delete user */
 router.delete("/:username", ensureAdmin, async (req, res, next) => {
