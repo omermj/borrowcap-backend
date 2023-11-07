@@ -25,7 +25,8 @@ router.get("/", async (req, res, next) => {
 router.get("/available", async (req, res, next) => {
   try {
     console.log("in request");
-    const availableInvestments = await ApprovedRequest.getAvailable();
+    const availableInvestments =
+      await ApprovedRequest.getAvailableForInvestment();
     return res.json({ availableInvestments });
   } catch (e) {
     return next(e);

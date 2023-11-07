@@ -286,3 +286,110 @@ describe("fund", () => {
     expect(fundedLoan.amtFunded).toEqual("9000");
   });
 });
+
+describe("addInvestorPledge", () => {
+  test("works", async () => {
+    await ApprovedRequest.addInvestorPledge(3, 3, 2000);
+    const investorPledges = await ApprovedRequest.getApprovedRequestsByUserId(
+      3
+    );
+    expect(investorPledges.investor.length).toEqual(1);
+    expect(investorPledges.investor[0].amtPledged).toEqual("2000");
+  });
+  test("throw error on incorrect app id", async () => {
+    await expect(
+      ApprovedRequest.addInvestorPledge(30, 3, 2000)
+    ).rejects.toThrow(NotFoundError);
+  });
+  test("throw error on incorrect investor id", async () => {
+    await expect(
+      ApprovedRequest.addInvestorPledge(3, 30, 2000)
+    ).rejects.toThrow(NotFoundError);
+  });
+});
+
+describe("getAvailableForInvestment", () => {
+  test("works", async () => {
+    let available = await ApprovedRequest.getAvailableForInvestment();
+    expect(available.length).toEqual(0);
+
+    await ApprovedRequest.enableFunding(3);
+    available = await ApprovedRequest.getAvailableForInvestment();
+    expect(available.length).toEqual(1);
+
+    await ApprovedRequest.fund(3, 3, 9000);
+    available = await ApprovedRequest.getAvailableForInvestment();
+    expect(available.length).toEqual(0);
+  });
+});
+
+describe("getApprovedRequestsByUserId", () => {
+  test("works for borrower", async () => {
+    const forBorrower = await ApprovedRequest.getApprovedRequestsByUserId(2);
+    expect(forBorrower).toEqual({
+      borrower: [
+        {
+          id: 3,
+          amtRequested: "10000",
+          amtApproved: "9000",
+          amtFunded: "0",
+          purpose: "Home",
+          appOpenDate: expect.any(Date),
+          appApprovedDate: expect.any(Date),
+          fundingDeadline: expect.any(Date),
+          interestRate: "0.05",
+          term: 24,
+          installmentAmt: "375.20",
+          availableForFunding: false,
+        },
+        {
+          id: 4,
+          amtRequested: "20000",
+          amtApproved: "18000",
+          amtFunded: "0",
+          purpose: "Car",
+          appOpenDate: expect.any(Date),
+          appApprovedDate: expect.any(Date),
+          fundingDeadline: expect.any(Date),
+          interestRate: "0.07",
+          term: 36,
+          installmentAmt: "500.54",
+          availableForFunding: false,
+        },
+      ],
+    });
+  });
+  test("works for investor", async () => {
+    let forInvestor = await ApprovedRequest.getApprovedRequestsByUserId(3);
+    expect(forInvestor.investor.length).toEqual(0);
+
+    await ApprovedRequest.enableFunding(3);
+    await ApprovedRequest.fund(3, 3, 4000);
+
+    forInvestor = await ApprovedRequest.getApprovedRequestsByUserId(3);
+    expect(forInvestor.investor.length).toEqual(1);
+    expect(forInvestor).toEqual({
+      investor: [
+        {
+          id: 3,
+          amtApproved: "9000",
+          amtPledged: "4000",
+          approvedDate: expect.any(Date),
+          fundingDeadline: expect.any(Date),
+          interestRate: "0.05",
+          term: 24,
+        },
+      ],
+    });
+  });
+  test("incorrect user role (not investor or borrower)", async () => {
+    await expect(
+      ApprovedRequest.getApprovedRequestsByUserId(1)
+    ).rejects.toThrow(BadRequestError);
+  });
+  test("incorrect user id", async () => {
+    await expect(
+      ApprovedRequest.getApprovedRequestsByUserId(300)
+    ).rejects.toThrow(NotFoundError);
+  });
+});

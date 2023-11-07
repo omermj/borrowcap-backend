@@ -119,7 +119,7 @@ class User {
     return result.rows;
   }
 
-  /** Given a username, return user data
+  /** Given a user id, return user data
    *
    * @returns {username, firstName, lastName, email, accountBalance,
    *  annualIncome, otherMonthlyDebt}
@@ -150,7 +150,7 @@ class User {
     return { ...user, roles };
   }
 
-  /** Get user by given username */
+  /** Get user by username */
   static async getByUsername(username) {
     const result = await db.query(
       `SELECT id, 
@@ -176,7 +176,7 @@ class User {
 
   /**
    * Delete a given user from database.
-   * @param {username}
+   * @param {id}
    * @returns {undefined}
    * @throws {NotFoundError} if username does not exist
    */

@@ -314,6 +314,12 @@ class ApprovedRequest {
    *  to mark investment pledged by investor
    */
   static async addInvestorPledge(appId, investorId, amount) {
+    const approvedRequest = await ApprovedRequest.get(appId);
+    if (!approvedRequest) throw new NotFoundError("Incorrect app id");
+
+    const investor = await User.get(investorId);
+    if (!investor) throw new NotFoundError("Incorrect investor id");
+
     const result = await db.query(
       `INSERT INTO approved_requests_investors
         (request_id, investor_id, pledged_amt)
@@ -328,39 +334,24 @@ class ApprovedRequest {
     return result.rows[0];
   }
 
-  /** Update the relation between Funded Loans and Investor tables
-   *  to mark investment by investor
-   */
-  static async updateFundedLoanInvestorRelation(loanId) {
-    const result = await db.query(
-      `
-      INSERT INTO funded_loans_investors (loan_id, investor_id, invested_amt)
-      SELECT request_id, investor_id, pledged_amt
-      FROM approved_requests_investors
-      WHERE request_id = $1
-      `,
-      [loanId]
-    );
-  }
+  // static async removeRelationApprovedRequestInvestors(appId) {
+  //   const result = await db.query(
+  //     `
+  //     DELETE
+  //       FROM approved_requests_investors
+  //       WHERE request_id = $1
+  //       RETURNING request_id
+  //   `,
+  //     [appId]
+  //   );
+  //   const id = result.rows[0];
+  //   if (!id) new NotFoundError(`No request with id: ${appId}`);
+  // }
 
-  static async removeRelationApprovedRequestInvestors(appId) {
+  /** Get Approved Requests which are available for investment */
+  static async getAvailableForInvestment() {
     const result = await db.query(
-      `
-      DELETE
-        FROM approved_requests_investors
-        WHERE request_id = $1
-        RETURNING request_id
-    `,
-      [appId]
-    );
-    const id = result.rows[0];
-    if (!id) new NotFoundError(`No request with id: ${appId}`);
-  }
-
-  static async getAvailable() {
-    const result = await db.query(
-      `
-      SELECT r.id,
+      `SELECT r.id,
         r.amt_approved AS "amtApproved",
         r.amt_funded AS "amtFunded",
         p.title AS "purpose",
@@ -370,8 +361,7 @@ class ApprovedRequest {
         r.term
       FROM approved_requests AS "r"
       JOIN purpose AS "p" ON p.id = r.purpose_id
-      WHERE r.available_for_funding = $1 AND r.is_funded = $2
-      `,
+      WHERE r.available_for_funding = $1 AND r.is_funded = $2`,
       [true, false]
     );
     return result.rows;
