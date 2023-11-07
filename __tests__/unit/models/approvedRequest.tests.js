@@ -1,6 +1,8 @@
 "use strict";
 
 const ApprovedRequest = require("../../../models/approvedRequest");
+const User = require("../../../models/user");
+const FundedLoan = require("../../../models/fundedLoan");
 
 const {
   ExpressError,
@@ -220,6 +222,12 @@ describe("delete", () => {
 });
 
 describe("fund", () => {
+  test("throw error if app id is incorrect", async () => {
+    await ApprovedRequest.enableFunding(3);
+    await expect(ApprovedRequest.fund(30, 3, 5000)).rejects.toThrow(
+      NotFoundError
+    );
+  });
   test("throw error if approvedRequest is not available for funding", async () => {
     await expect(ApprovedRequest.fund(3, 3, 5000)).rejects.toThrow(
       ExpressError
@@ -231,8 +239,50 @@ describe("fund", () => {
       ExpressError
     );
   });
-  test("works - fully fund request if amount is equal to investable amount", async () => {
+  test("throw error if investor does not have sufficient funds", async () => {
     await ApprovedRequest.enableFunding(3);
-    
-  })
+    await User.withdrawFunds(3, 49000);
+    await expect(ApprovedRequest.fund(3, 3, 2000)).rejects.toThrow(
+      ExpressError
+    );
+  });
+  test("throw error if investor id is incorrect", async () => {
+    await ApprovedRequest.enableFunding(3);
+    await expect(ApprovedRequest.fund(3, 30, 5000)).rejects.toThrow(
+      NotFoundError
+    );
+  });
+
+  test("works - partial funding", async () => {
+    await ApprovedRequest.enableFunding(3);
+    await ApprovedRequest.fund(3, 3, 2000);
+    const approvedRequest = await ApprovedRequest.get(3);
+
+    // amtFunded field is updated in db
+    expect(approvedRequest.amtFunded).toEqual("2000");
+
+    // investor balance is updated
+    const investor = await User.get(3);
+    expect(investor.accountBalance).toEqual("48000");
+
+    // investor pledge is updated in db
+    const investorPledges = await ApprovedRequest.getApprovedRequestsByUserId(
+      3
+    );
+    expect(investorPledges.investor.length).toEqual(1);
+    expect(investorPledges.investor[0].amtPledged).toEqual("2000");
+  });
+  test("works - full funding", async () => {
+    await ApprovedRequest.enableFunding(3);
+    await ApprovedRequest.fund(3, 3, 9000);
+
+    // isFunded and availableForFunding properties are updated
+    const approvedRequest = await ApprovedRequest.get(3);
+    expect(approvedRequest.isFunded).toBe(true);
+    expect(approvedRequest.availableForFunding).toBe(false);
+
+    // fundedLoan entry is created
+    const fundedLoan = await FundedLoan.get(3);
+    expect(fundedLoan.amtFunded).toEqual("9000");
+  });
 });

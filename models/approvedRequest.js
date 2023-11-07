@@ -42,7 +42,7 @@ class ApprovedRequest {
     return result.rows;
   }
 
-  /** Get Approved Request from databas given id */
+  /** Get Approved Request from database given id */
   static async get(id) {
     const result = await db.query(
       `
@@ -259,118 +259,69 @@ class ApprovedRequest {
 
   /** Fund Approved Request */
   static async fund(appId, investorId, amount) {
-    // get approved request and investor profile
+    // get approved request and investor data
     const approvedRequest = await ApprovedRequest.get(appId);
     const investor = await User.get(investorId);
 
-    // check if request is available for funding
+    // throw error if approvedRequest is not available for funding
     if (!approvedRequest.availableForFunding)
       throw new ExpressError(
         `Approved request with id of ${appId} is not available for funding.`
       );
 
-    // get remaining funding amount
-    const remainingFundingAmount =
+    // throw error if amtAvailableToFund < amount
+    const amtAvailableToFund =
       +approvedRequest.amtApproved - approvedRequest.amtFunded;
-
-    // if remaining funding amount is greater than amount of funding being
-    // requested, throw an error
-    if (amount > remainingFundingAmount)
+    if (amount > amtAvailableToFund)
       throw new ExpressError(
         "Amount of funding request must be lower or equal to remaining funding amount"
       );
 
-    // if funding amount is equal to remaining amount, fully fund the request
-    if (amount === remainingFundingAmount) {
-      // check if investor has enough balance
-      if (investor.accountBalance < amount)
-        throw new BadRequestError(
-          "Investor does not have enough accountBalance"
-        );
+    // throw error if investor funds are insufficient
+    if (investor.accountBalance < amount)
+      throw new BadRequestError("Investor does not have enough accountBalance");
 
+    // update approvedRequest entry with funding information
+    let updatedApprovedRequest = await ApprovedRequest.update(appId, {
+      amtFunded: +approvedRequest.amtFunded + amount,
+    });
+
+    // add investor pledge in database
+    await ApprovedRequest.addInvestorPledge(appId, investorId, amount);
+
+    // reduce investor balance by amount of pledge
+    await User.withdrawFunds(investor.id, amount);
+
+    // if approvedRequest is fully funded, create fundedLoan
+    if (amount === amtAvailableToFund) {
       // set is_funded to true (fully funded) & set availableForFunding to false
-      const updatedApprovedRequest = await ApprovedRequest.update(appId, {
-        amtFunded: approvedRequest.amtApproved,
+      updatedApprovedRequest = await ApprovedRequest.update(appId, {
         isFunded: true,
         availableForFunding: false,
       });
-
-      // Updated Approved Request and Investor relation for pledged amount
-      const updatePledgeResult =
-        await ApprovedRequest.updateRequestInvestorRelation(
-          appId,
-          investorId,
-          amount
-        );
-
-      // Create fundedLoan entry
-      updatedApprovedRequest.appId = updatedApprovedRequest.id;
-      updatedApprovedRequest.fundedDate = new Date().toUTCString();
-      updatedApprovedRequest.amtFunded = updatedApprovedRequest.amtApproved;
-      updatedApprovedRequest.remainingBalance =
-        updatedApprovedRequest.amtApproved;
-
-      const fundedLoan = await FundedLoan.create({
-        ...updatedApprovedRequest,
-      });
-      const updateInvestorRelation =
-        await ApprovedRequest.updateFundedLoanInvestorRelation(appId);
-
-      // Remove relationship between approved_request and investors as request is
-      // funded
-      ApprovedRequest.removeRelationApprovedRequestInvestors(appId);
-
-      // Reduce investor balance by amount of contribution
-      await User.withdrawFunds(investor.id, amount);
-
-      // Increase borrower balance by amount of total funded loan
-      await User.depositFunds(fundedLoan.borrowerId, fundedLoan.amtFunded);
-
-      return updatedApprovedRequest;
+      // create fundedLoan
+      const fundedLoan = await FundedLoan.create(updatedApprovedRequest);
     }
 
-    // else if amount is less than remaining amount, update the Active Request
-    // entry and record it as a pledge
-    if (amount < remainingFundingAmount) {
-      // check if investor has enough balance
-      if (investor.accountBalance < amount)
-        throw new BadRequestError(
-          "Investor does not have enough accountBalance"
-        );
+    // Remove relationship between approved_request and investors as request is
+    // funded
+    // ApprovedRequest.removeRelationApprovedRequestInvestors(appId);
 
-      const updatedApprovedRequest = await ApprovedRequest.update(appId, {
-        amtFunded: +approvedRequest.amtFunded + amount,
-      });
-
-      // Updated Approved Request and Investor relation for pledged amount
-      const updatePledgeResult =
-        await ApprovedRequest.updateRequestInvestorRelation(
-          appId,
-          investorId,
-          amount
-        );
-
-      // Reduce investor balance by amount of pledge
-      await User.withdrawFunds(investor.id, amount);
-
-      return updatedApprovedRequest;
-    }
+    return updatedApprovedRequest;
   }
 
   /** Update the relation between Approved Requests and Investor tables
    *  to mark investment pledged by investor
    */
-  static async updateRequestInvestorRelation(appId, investorId, amount) {
+  static async addInvestorPledge(appId, investorId, amount) {
     const result = await db.query(
-      `
-      INSERT INTO approved_requests_investors
+      `INSERT INTO approved_requests_investors
         (request_id, investor_id, pledged_amt)
         VALUES ($1, $2, $3)
         RETURNING
           request_id AS "requestId",
           investor_id AS "investorId",
-          pledged_amt AS "pledgedAmt"     
-    `,
+          pledged_amt AS "pledgedAmt"`,
       [appId, investorId, amount]
     );
     if (!result.rows[0]) throw new ExpressError("Error updating database");

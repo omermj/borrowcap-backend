@@ -6,7 +6,8 @@ const {
   ExpressError,
   BadRequestError,
 } = require("../expressError");
-const User = require("../models/user");
+const User = require("./user");
+const ApprovedRequest = require("./approvedRequest");
 
 /** Class for Funded Loans */
 
@@ -49,19 +50,13 @@ class FundedLoan {
   }
 
   /** Create funded loan */
-  static async create({
-    appId,
-    borrowerId,
-    amtFunded,
-    fundedDate,
-    interestRate,
-    term,
-    installmentAmt,
-    remainingBalance,
-  }) {
+  static async create(appData) {
+    const { id, borrowerId, amtFunded, interestRate, term, installmentAmt } =
+      appData;
+
+    // create database entry for fundedLoan
     const result = await db.query(
-      `
-      INSERT INTO funded_loans
+      `INSERT INTO funded_loans
         (id,
           borrower_id,
           amt_funded,
@@ -80,20 +75,40 @@ class FundedLoan {
           interest_rate AS "interestRate",
           term,
           installment_amt AS "installmentAmt",
-          remaining_balance AS "remainingBalance"
-    `,
+          remaining_balance AS "remainingBalance"`,
       [
-        appId,
+        id,
         borrowerId,
         amtFunded,
-        fundedDate,
+        new Date().toUTCString(),
         interestRate,
         term,
         installmentAmt,
-        remainingBalance,
+        amtFunded,
       ]
     );
+
+    // update investors for funded loans
+    await FundedLoan.updateInvestorsForFundedLoan(id);
+
+    // transfer funds to borrower
+    await User.depositFunds(borrowerId, amtFunded);
+
     return result.rows[0];
+  }
+
+  /** Update investors for fundedLoan */
+  static async updateInvestorsForFundedLoan(appId) {
+    const result = await db.query(
+      `INSERT INTO funded_loans_investors (loan_id, investor_id, invested_amt)
+        SELECT request_id, investor_id, pledged_amt
+        FROM approved_requests_investors
+        WHERE request_id = $1
+        RETURNING loan_id`,
+      [appId]
+    );
+
+    if (!result.rows[0]) throw new NotFoundError("Invalid app id");
   }
 
   /** Record loan installment received */
