@@ -7,7 +7,6 @@ const {
   BadRequestError,
 } = require("../expressError");
 const User = require("./user");
-const ApprovedRequest = require("./approvedRequest");
 
 /** Class for Funded Loans */
 
@@ -54,50 +53,54 @@ class FundedLoan {
     const { id, borrowerId, amtFunded, interestRate, term, installmentAmt } =
       appData;
 
-    // create database entry for fundedLoan
-    const result = await db.query(
-      `INSERT INTO funded_loans
-        (id,
-          borrower_id,
-          amt_funded,
-          funded_date,
-          interest_rate,
-          term,
-          installment_amt,
-          remaining_balance
-          )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING
+    try {
+      // create database entry for fundedLoan
+      const result = await db.query(
+        `INSERT INTO funded_loans
+          (id,
+            borrower_id,
+            amt_funded,
+            funded_date,
+            interest_rate,
+            term,
+            installment_amt,
+            remaining_balance
+            )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING
+            id,
+            borrower_id AS "borrowerId",
+            amt_funded AS "amtFunded",
+            funded_date AS "fundedDate",
+            interest_rate AS "interestRate",
+            term,
+            installment_amt AS "installmentAmt",
+            remaining_balance AS "remainingBalance"`,
+        [
           id,
-          borrower_id AS "borrowerId",
-          amt_funded AS "amtFunded",
-          funded_date AS "fundedDate",
-          interest_rate AS "interestRate",
+          borrowerId,
+          amtFunded,
+          new Date().toUTCString(),
+          interestRate,
           term,
-          installment_amt AS "installmentAmt",
-          remaining_balance AS "remainingBalance"`,
-      [
-        id,
-        borrowerId,
-        amtFunded,
-        new Date().toUTCString(),
-        interestRate,
-        term,
-        installmentAmt,
-        amtFunded,
-      ]
-    );
+          installmentAmt,
+          amtFunded,
+        ]
+      );
 
-    // update investors for funded loans
-    await FundedLoan.updateInvestorsForFundedLoan(id);
+      // update investors for funded loans
+      await FundedLoan.updateInvestorsForFundedLoan(id);
 
-    // transfer funds to borrower
-    await User.depositFunds(borrowerId, amtFunded);
+      // transfer funds to borrower
+      await User.depositFunds(borrowerId, amtFunded);
 
-    return result.rows[0];
+      return result.rows[0];
+    } catch (e) {
+      throw new BadRequestError("Incorrect data provided to create fundedLoan");
+    }
   }
 
-  /** Update investors for fundedLoan */
+  /** Update investors for fundedLoan from investor pledges */
   static async updateInvestorsForFundedLoan(appId) {
     const result = await db.query(
       `INSERT INTO funded_loans_investors (loan_id, investor_id, invested_amt)
@@ -134,7 +137,20 @@ class FundedLoan {
     // if it is last payment, transfer record to paidoff_loans table and delete
     // record from funded_loans else reduce balance by payment amount
     if (fundedLoan.remainingBalance <= principal) {
+      // update borrower account balance
+      await User.withdrawFunds(
+        fundedLoan.borrowerId,
+        fundedLoan.remainingBalance
+      );
+      // update investor account balance
+      await FundedLoan.updateInvestorsBalanceForInstallment(
+        id,
+        fundedLoan.remainingBalance
+      );
+
+      // payoff loan
       await FundedLoan.payoffLoan(id);
+
       return fundedLoan;
     }
 
@@ -164,7 +180,10 @@ class FundedLoan {
     await User.withdrawFunds(fundedLoan.borrowerId, fundedLoan.installmentAmt);
 
     // update investor account balance
-    await FundedLoan.updateInvestorsBalanceForInstallment(id);
+    await FundedLoan.updateInvestorsBalanceForInstallment(
+      id,
+      fundedLoan.installmentAmt
+    );
 
     return result.rows[0];
   }
@@ -232,7 +251,7 @@ class FundedLoan {
   }
 
   /** Update investor(s) balance for installment received */
-  static async updateInvestorsBalanceForInstallment(loan_id) {
+  static async updateInvestorsBalanceForInstallment(loan_id, amount) {
     // get the funded loan
     const fundedLoan = await FundedLoan.get(loan_id);
     if (!fundedLoan)
@@ -253,8 +272,7 @@ class FundedLoan {
     // iterate through investors and deposit relevant amounts in their balances
     investedAmts.map(async (investment) => {
       const amtToDeposit =
-        (+investment.investedAmt / +fundedLoan.amtFunded) *
-        +fundedLoan.installmentAmt;
+        (+investment.investedAmt / +fundedLoan.amtFunded) * amount;
       await User.depositFunds(investment.investorId, amtToDeposit);
     });
   }
@@ -291,6 +309,7 @@ class FundedLoan {
       const result = await db.query(
         `SELECT 
           f.id,
+          l.investor_id AS "investorId",
           l.invested_amt AS "amtInvested",
           f.amt_funded AS "amtFunded",
           f.funded_date AS "fundedDate",
