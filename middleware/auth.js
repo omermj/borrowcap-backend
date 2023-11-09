@@ -24,8 +24,7 @@ function ensureAuthorizedUser(req, res, next) {
     const user = res.locals.user;
     if (
       !user ||
-      req.params.username !== user.id ||
-      req.params.username !== user.id
+      (req.params.username !== user.username && +req.params.id !== user.id)
     )
       throw new UnauthorizedError();
     return next();

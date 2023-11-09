@@ -55,10 +55,10 @@ router.post("/", ensureAdmin, async (req, res, next) => {
 });
 
 /** Delete user */
-router.delete("/:username", ensureAdmin, async (req, res, next) => {
+router.delete("/:id", ensureAdmin, async (req, res, next) => {
   try {
-    const result = await User.delete(req.params.username);
-    return res.json({ message: `deteled ${req.params.username}` });
+    const user = await User.delete(req.params.id);
+    return res.json({ message: `deteled ${req.params.id}` });
   } catch (e) {
     return next(e);
   }
@@ -76,7 +76,7 @@ router.patch(
         const errs = validator.errors.map((e) => e.stack);
         throw new BadRequestError(errs);
       }
-      const user = await User.update(req.body.username, req.body);
+      const user = await User.update(req.params.username, req.body);
       return res.json({ user });
     } catch (e) {
       return next(e);
