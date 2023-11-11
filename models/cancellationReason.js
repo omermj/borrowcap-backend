@@ -12,7 +12,7 @@ class CancellationReason {
 
     // create roles object
     const reasons = {};
-    result.rows.map((reason) => (reasons[reason.title] = reasons.id));
+    result.rows.map((reason) => (reasons[reason.title] = reason.id));
 
     return reasons;
   }

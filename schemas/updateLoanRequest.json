@@ -3,7 +3,6 @@
   "$id": "http://example.com/example.json",
   "type": "object",
   "title": "New Loan Application Schema",
-  "required": ["amtRequested", "purposeId", "term"],
   "properties": {
     "amtRequested": {
       "type": "number",
@@ -14,7 +13,8 @@
     },
     "interestRate": {
       "type": "number",
-      "minimum": 0.0001
+      "minimum": 0.0001,
+      "maximum": 1
     },
     "term": {
       "type": "string"

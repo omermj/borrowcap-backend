@@ -12,7 +12,6 @@ const {
 
 class CancelledRequest {
   /** Create a CancelledRequest */
-
   static async create({
     id,
     borrowerId,
@@ -85,6 +84,60 @@ class CancelledRequest {
     } catch (e) {
       throw new ExpressError(`Database error: ${e}`);
     }
+  }
+
+  /** Get all cancelled requests */
+  static async getAll() {
+    const result = await db.query(
+      `SELECT
+        r.id,
+        r.borrower_id AS "borrowerId",
+        r.amt_requested AS "amtRequested",
+        r.amt_approved AS "amtApproved",
+        r.purpose_id AS "purposeId",
+        p.title AS "purpose",
+        r.app_open_date AS "appOpenDate",
+        r.app_approved_date AS "appApprovedDate",
+        r.app_cancelled_date AS "appCancelledDate",
+        r.interest_rate AS "interestRate",
+        r.term,
+        r.installment_amt AS "installmentAmt",
+        r.was_approved AS "wasApproved",
+        r.cancellation_reason_id AS "cancellationReasonId"
+      FROM cancelled_requests as "r"
+      JOIN purpose AS "p" ON p.id = r.purpose_id
+      ORDER BY r.id`
+    );
+    return result.rows;
+  }
+
+  /** Get cancelled request by id */
+  static async get(id) {
+    const result = await db.query(
+      `SELECT
+        r.id,
+        r.borrower_id AS "borrowerId",
+        r.amt_requested AS "amtRequested",
+        r.amt_approved AS "amtApproved",
+        r.purpose_id AS "purposeId",
+        p.title AS "purpose",
+        r.app_open_date AS "appOpenDate",
+        r.app_approved_date AS "appApprovedDate",
+        r.app_cancelled_date AS "appCancelledDate",
+        r.interest_rate AS "interestRate",
+        r.term,
+        r.installment_amt AS "installmentAmt",
+        r.was_approved AS "wasApproved",
+        r.cancellation_reason_id AS "cancellationReasonId"
+      FROM cancelled_requests as "r"
+      JOIN purpose AS "p" ON p.id = r.purpose_id
+      WHERE r.id = $1`,
+      [id]
+    );
+    const cancelledRequest = result.rows[0];
+    if (!cancelledRequest)
+      throw new NotFoundError(`No Canceleld Request exists with id: ${id}`);
+    return cancelledRequest;
   }
 }
 

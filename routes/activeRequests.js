@@ -79,6 +79,7 @@ router.post("/", ensureLoggedIn, async (req, res, next) => {
 router.patch("/:id", ensureAdmin, async (req, res, next) => {
   try {
     // validate req.body
+    if (!req.body) throw new BadRequestError("No data was provided");
     const validator = jsonschema.validate(req.body, updateLoanSchema);
     if (!validator.valid) {
       const errs = validator.errors.map((e) => e.stack);
@@ -129,8 +130,8 @@ router.patch("/:id/reject", ensureAdmin, async (req, res, next) => {
   try {
     const rejectedRequest = await ActiveRequest.reject(req.params.id);
     if (rejectedRequest)
-      return res.json({ message: "Active Request is rejected." });
-    else return res.json({ message: "Approved Request was not rejected." });
+      return res.json({ message: "activeRequest is rejected." });
+    else return res.json({ message: "activeRequest was not rejected." });
   } catch (e) {
     return next(e);
   }
