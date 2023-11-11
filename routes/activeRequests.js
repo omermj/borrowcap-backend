@@ -56,7 +56,6 @@ router.get(
 /** Create new activeRequest */
 router.post("/", ensureLoggedIn, async (req, res, next) => {
   try {
-    console.log("data", req.body);
     // validate req.body
     const validator = jsonschema.validate(req.body, newLoanSchema);
     if (!validator.valid) {
@@ -125,7 +124,7 @@ router.patch("/:id/approve", ensureAdmin, async (req, res, next) => {
   }
 });
 
-/** Reject loan request (Underwriter only) */
+/** Reject activeRequest (Underwriter only) */
 router.patch("/:id/reject", ensureAdmin, async (req, res, next) => {
   try {
     const rejectedRequest = await ActiveRequest.reject(req.params.id);

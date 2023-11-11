@@ -26,7 +26,7 @@ class ActiveRequest {
 
     // Get interest rate
     const interestRates = await getInterestRates();
-    const interestRate = interestRates[term] / 100 + PROFIT_MARGIN;
+    const interestRate = (interestRates[term] / 100 + PROFIT_MARGIN).toFixed(4);
 
     // Calculate installment amount
     const pmt = this.calculatePayment(amtRequested, interestRate / 12, term);
@@ -207,7 +207,6 @@ class ActiveRequest {
   }
 
   /** Delete Active Request, given id. Returns true if successful. */
-
   static async delete(id) {
     const result = await db.query(
       `

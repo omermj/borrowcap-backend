@@ -14,10 +14,9 @@ const {
   commonBeforeAll,
   commonBeforeEach,
 } = require("./_testCommon.js");
-const { DatabaseError } = require("pg");
 const { getInterestRates } = require("../../../helpers/interestRate.js");
 const ApprovedRequest = require("../../../models/approvedRequest.js");
-const User = require("../../../models/user.js");
+
 jest.mock("../../../helpers/interestRate.js");
 
 // setup before/after commands

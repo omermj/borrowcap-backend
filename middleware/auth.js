@@ -37,6 +37,7 @@ function ensureLoggedIn(req, res, next) {
   try {
     const user = res.locals.user;
     if (!user) throw new UnauthorizedError();
+    return next();
   } catch (e) {
     return next(e);
   }
