@@ -60,7 +60,6 @@ router.post("/", ensureLoggedIn, async (req, res, next) => {
     const validator = jsonschema.validate(req.body, newLoanSchema);
     if (!validator.valid) {
       const errs = validator.errors.map((e) => e.stack);
-      console.log(validator.errors);
       throw new BadRequestError(errs);
     }
     // check if userId(borrowerId) has borrower role

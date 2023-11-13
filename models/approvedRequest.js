@@ -53,6 +53,7 @@ class ApprovedRequest {
         r.amt_approved AS "amtApproved",
         r.amt_funded AS "amtFunded",
         p.title AS "purpose",
+        p.id AS "purposeId",
         r.app_open_date AS "appOpenDate",
         r.app_approved_date AS "appApprovedDate",
         r.funding_deadline AS "fundingDeadline",

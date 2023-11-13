@@ -79,7 +79,7 @@ CREATE TABLE cancelled_requests (
   borrower_id INTEGER NOT NULL,
   amt_requested NUMERIC NOT NULL,
   amt_approved NUMERIC,
-  purpose_id INTEGER,
+  purpose_id INTEGER NOT NULL,
   app_open_date TIMESTAMP NOT NULL,
   app_approved_date TIMESTAMP,
   app_cancelled_date TIMESTAMP NOT NULL,
@@ -88,7 +88,7 @@ CREATE TABLE cancelled_requests (
   term INTEGER NOT NULL,
   installment_amt NUMERIC NOT NULL,
   was_approved BOOLEAN NOT NULL,
-  cancellation_reason_id INTEGER,
+  cancellation_reason_id INTEGER NOT NULL,
   FOREIGN KEY (purpose_id) REFERENCES purpose (id) ON DELETE SET NULL,
   FOREIGN KEY (cancellation_reason_id) REFERENCES cancellation_reasons (id) ON DELETE SET NULL,
   FOREIGN KEY (borrower_id) REFERENCES users (id) ON DELETE CASCADE

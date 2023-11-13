@@ -28,9 +28,8 @@ class CancelledRequest {
     wasApproved,
     cancellationReasonId,
   }) {
-    try {
-      const result = await db.query(
-        `
+    const result = await db.query(
+      `
       INSERT INTO cancelled_requests
         (id,
         borrower_id,
@@ -63,27 +62,26 @@ class CancelledRequest {
         was_approved AS "wasApproved",
         cancellation_reason_id AS "cancellationReasonId"
     `,
-        [
-          id,
-          borrowerId,
-          amtRequested,
-          amtApproved,
-          purposeId,
-          appOpenDate,
-          appApprovedDate,
-          appCancelledDate,
-          fundingDeadline,
-          interestRate,
-          term,
-          installmentAmt,
-          wasApproved,
-          cancellationReasonId,
-        ]
-      );
-      return result.rows[0];
-    } catch (e) {
-      throw new ExpressError(`Database error: ${e}`);
-    }
+      [
+        id,
+        borrowerId,
+        amtRequested,
+        amtApproved,
+        purposeId,
+        appOpenDate,
+        appApprovedDate,
+        appCancelledDate,
+        fundingDeadline,
+        interestRate,
+        term,
+        installmentAmt,
+        wasApproved,
+        cancellationReasonId,
+      ]
+    );
+    // const test = await this.get(5);
+    // console.log("test", test);
+    return result.rows[0];
   }
 
   /** Get all cancelled requests */
@@ -104,7 +102,7 @@ class CancelledRequest {
         r.installment_amt AS "installmentAmt",
         r.was_approved AS "wasApproved",
         r.cancellation_reason_id AS "cancellationReasonId"
-      FROM cancelled_requests as "r"
+      FROM cancelled_requests AS "r"
       JOIN purpose AS "p" ON p.id = r.purpose_id
       ORDER BY r.id`
     );
@@ -136,7 +134,7 @@ class CancelledRequest {
     );
     const cancelledRequest = result.rows[0];
     if (!cancelledRequest)
-      throw new NotFoundError(`No Canceleld Request exists with id: ${id}`);
+      throw new NotFoundError(`No Cancelled Request exists with id: ${id}`);
     return cancelledRequest;
   }
 }

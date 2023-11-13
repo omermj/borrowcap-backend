@@ -3,16 +3,26 @@
 /** Routes for Active Loan Requests */
 
 const express = require("express");
-const jsonschema = require("jsonschema");
-const { BadRequestError, NotFoundError } = require("../expressError");
+const {
+  BadRequestError,
+  NotFoundError,
+  UnauthorizedError,
+} = require("../expressError");
 const ApprovedRequest = require("../models/approvedRequest");
 const User = require("../models/user");
-const app = require("../app");
+const {
+  ensureAdmin,
+  ensureAuthorizedUserOrAdmin,
+  ensureAuthorizedUser,
+  ensureLoggedIn,
+  ensureCorrectBorrower,
+  ensureAdminOrCorrectBorrower,
+} = require("../middleware/auth");
 
 const router = express.Router();
 
 /** Get all approved requests */
-router.get("/", async (req, res, next) => {
+router.get("/", ensureAdmin, async (req, res, next) => {
   try {
     const approvedRequests = await ApprovedRequest.getAll();
     return res.json({ approvedRequests });
@@ -22,9 +32,8 @@ router.get("/", async (req, res, next) => {
 });
 
 /** Get all approved requests which are available for investment */
-router.get("/available", async (req, res, next) => {
+router.get("/available", ensureLoggedIn, async (req, res, next) => {
   try {
-    console.log("in request");
     const availableInvestments =
       await ApprovedRequest.getAvailableForInvestment();
     return res.json({ availableInvestments });
@@ -34,9 +43,9 @@ router.get("/available", async (req, res, next) => {
 });
 
 /** Given id, return approved request data */
-router.get("/:id", async (req, res, next) => {
+router.get("/:appId", ensureAdmin, async (req, res, next) => {
   try {
-    const approvedRequest = await ApprovedRequest.get(req.params.id);
+    const approvedRequest = await ApprovedRequest.get(req.params.appId);
     return res.json({ approvedRequest });
   } catch (e) {
     return next(e);
@@ -44,9 +53,11 @@ router.get("/:id", async (req, res, next) => {
 });
 
 /** Given id, cancel approved request */
-router.patch("/:id/cancel", async (req, res, next) => {
+router.delete("/:appId/cancel", async (req, res, next) => {
   try {
-    const cancelledRequest = await ApprovedRequest.cancel(req.params.id, 3);
+    await ensureAdminOrCorrectBorrower(req, res, next);
+
+    const cancelledRequest = await ApprovedRequest.cancel(req.params.appId, 3);
     return res.json({ message: cancelledRequest });
   } catch (e) {
     return next(e);
@@ -54,9 +65,11 @@ router.patch("/:id/cancel", async (req, res, next) => {
 });
 
 /** Given id, enable funding to approved request */
-router.patch("/:id/enablefunding", async (req, res, next) => {
+router.patch("/:appId/enablefunding", async (req, res, next) => {
   try {
-    const result = await ApprovedRequest.enableFunding(req.params.id);
+    await ensureCorrectBorrower(req, res, next);
+
+    const result = await ApprovedRequest.enableFunding(req.params.appId);
     return res.json({ message: "Funding enabled." });
   } catch (e) {
     return next(e);
@@ -64,20 +77,21 @@ router.patch("/:id/enablefunding", async (req, res, next) => {
 });
 
 /** Add funding pledge to an approved request */
-router.patch("/:id/fund", async (req, res, next) => {
+router.patch("/:appId/fund", ensureLoggedIn, async (req, res, next) => {
   try {
-    if (!req.body.amount || !req.body.investorId)
-      throw new BadRequestError(
-        "No amount or investorId provided as part of request body"
-      );
+    if (!req.body.amount) throw new BadRequestError("Amount is required");
+
+    const user = await User.get(res.locals.user.id);
+    if (!user.roles.includes("investor")) throw new UnauthorizedError();
+
     const approvedRequest = await ApprovedRequest.fund(
-      req.params.id,
-      req.body.investorId,
+      req.params.appId,
+      user.id,
       req.body.amount
     );
     if (!approvedRequest)
       throw new NotFoundError(
-        `Approved Request with id ${req.params.id} does not exist.`
+        `Approved Request with id ${req.params.appId} does not exist.`
       );
     return res.json({ approvedRequest });
   } catch (e) {
@@ -85,16 +99,19 @@ router.patch("/:id/fund", async (req, res, next) => {
   }
 });
 
-/** Get Approved Requests for Borrower */
-router.get("/users/:id", async (req, res, next) => {
-  try {
-    const approvedRequests = await ApprovedRequest.getApprovedRequestsByUserId(
-      req.params.id
-    );
-    return res.json({ approvedRequests });
-  } catch (e) {
-    return next(e);
+/** Get Approved Requests for User */
+router.get(
+  "/users/:userId",
+  ensureAuthorizedUserOrAdmin,
+  async (req, res, next) => {
+    try {
+      const approvedRequests =
+        await ApprovedRequest.getApprovedRequestsByUserId(req.params.userId);
+      return res.json({ approvedRequests });
+    } catch (e) {
+      return next(e);
+    }
   }
-});
+);
 
 module.exports = router;

@@ -277,7 +277,6 @@ describe("PATCH /activerequests/:id", () => {
       .patch("/activerequests/1")
       .send(updateData)
       .set("authorization", u1Token);
-    console.log(resp.body);
     const activeRequest = await ActiveRequest.get(1);
     expect(resp.statusCode).toEqual(200);
     expect(activeRequest).toEqual({

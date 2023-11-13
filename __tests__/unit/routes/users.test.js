@@ -217,7 +217,6 @@ describe("DELETE /users/:username", () => {
     const resp = await request(app)
       .delete("/users/wrong")
       .set("authorization", u1Token);
-    console.log(resp.body);
     expect(resp.statusCode).toEqual(500);
   });
   test("unauth on anon", async () => {

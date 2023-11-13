@@ -3,6 +3,7 @@
 const ApprovedRequest = require("../../../models/approvedRequest");
 const User = require("../../../models/user");
 const FundedLoan = require("../../../models/fundedLoan");
+const CancelledRequest = require("../../../models/cancelledRequest");
 
 const {
   ExpressError,
@@ -180,6 +181,10 @@ describe("cancel", () => {
 
     expect(response).toBe(true);
     expect(numReqAfterCancel).toEqual(numReqBeforeCancel - 1);
+
+    // check if cancelledRequest is created in db
+    const cancelledRequest = await CancelledRequest.getAll();
+    console.log(cancelledRequest);
   });
   test("throw error on incorrect id", async () => {
     await expect(ApprovedRequest.cancel(30)).rejects.toThrow(NotFoundError);
