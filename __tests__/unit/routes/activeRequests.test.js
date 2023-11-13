@@ -404,6 +404,7 @@ describe("PATCH /activerequests/:id/approve", () => {
       isFunded: false,
       otherMonthlyDebt: "2000",
       purpose: "Car",
+      purposeId: 2,
       term: 36,
     });
   });

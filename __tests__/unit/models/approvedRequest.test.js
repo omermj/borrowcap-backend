@@ -84,6 +84,7 @@ describe("get", () => {
       interestRate: "0.05",
       isFunded: false,
       purpose: "Home",
+      purposeId: 1,
       term: 24,
       annualIncome: "100000",
       otherMonthlyDebt: "2000",
@@ -173,7 +174,7 @@ describe("cancel", () => {
     const numReqBeforeCancel = approvedRequests.length;
 
     //cancel request
-    const response = await ApprovedRequest.cancel(3);
+    const response = await ApprovedRequest.cancel(3, 3);
 
     //Number of approvedRequests after cancellation
     approvedRequests = await ApprovedRequest.getAll();
@@ -184,7 +185,6 @@ describe("cancel", () => {
 
     // check if cancelledRequest is created in db
     const cancelledRequest = await CancelledRequest.getAll();
-    console.log(cancelledRequest);
   });
   test("throw error on incorrect id", async () => {
     await expect(ApprovedRequest.cancel(30)).rejects.toThrow(NotFoundError);

@@ -242,6 +242,7 @@ describe("approve", () => {
       amtApproved: "8000",
       amtFunded: "0",
       purpose: "Car",
+      purposeId: 2,
       appOpenDate: expect.any(Date),
       appApprovedDate: expect.any(Date),
       fundingDeadline: expect.any(Date),
