@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const { SECRET_KEY } = require("../config");
 const { UnauthorizedError } = require("../expressError");
 const ApprovedRequest = require("../models/approvedRequest");
+const User = require("../models/user");
 
 function authenticateJWT(req, res, next) {
   try {
@@ -37,7 +38,9 @@ function ensureAuthorizedUser(req, res, next) {
 function ensureLoggedIn(req, res, next) {
   try {
     const user = res.locals.user;
-    if (!user) throw new UnauthorizedError();
+    if (!user) {
+      throw new UnauthorizedError("User is not logged in");
+    }
     return next();
   } catch (e) {
     return next(e);
@@ -47,14 +50,14 @@ function ensureLoggedIn(req, res, next) {
 function ensureAdmin(req, res, next) {
   try {
     if (!res.locals.user || !res.locals.user.isAdmin)
-      throw new UnauthorizedError();
+      throw new UnauthorizedError("User is not admin");
     return next();
   } catch (e) {
     return next(e);
   }
 }
 
-function ensureAuthorizedUserOrAdmin(req, res, next) {
+function ensureAdminOrLoggedIn(req, res, next) {
   try {
     const user = res.locals.user;
 
@@ -81,6 +84,7 @@ async function ensureCorrectBorrower(req, res, next) {
   try {
     const approvedRequest = await ApprovedRequest.get(req.params.appId);
     if (+approvedRequest.borrowerId !== +user.id) throw new UnauthorizedError();
+    return next();
   } catch (e) {
     return next(e);
   }
@@ -96,8 +100,44 @@ async function ensureAdminOrCorrectBorrower(req, res, next) {
     const approvedRequest = await ApprovedRequest.get(req.params.appId);
     if (!user.isAdmin && +approvedRequest.borrowerId !== +user.id)
       throw new UnauthorizedError();
+    return next();
   } catch (e) {
     return next(e);
+  }
+}
+
+async function isCorrectBorrower(userId, appId) {
+  try {
+    const approvedRequest = await ApprovedRequest.get(appId);
+    if (+approvedRequest.borrowerId !== +userId) return false;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function isInvestor(userId) {
+  try {
+    const user = await User.get(userId);
+    if (!user.roles.includes("investor")) return false;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function isCorrectInvestor(userId, appId) {
+  try {
+    const approvedRequests = await ApprovedRequest.getApprovedRequestsByUserId(
+      userId
+    );
+    const approvedRequest = approvedRequests.investor.find(
+      (app) => app.id === +appId
+    );
+    if (!approvedRequest) return false;
+    return true;
+  } catch (e) {
+    return false;
   }
 }
 
@@ -105,8 +145,11 @@ module.exports = {
   authenticateJWT,
   ensureAuthorizedUser,
   ensureAdmin,
-  ensureAuthorizedUserOrAdmin,
+  ensureAdminOrLoggedIn,
   ensureLoggedIn,
   ensureCorrectBorrower,
   ensureAdminOrCorrectBorrower,
+  isCorrectBorrower,
+  isCorrectInvestor,
+  isInvestor,
 };

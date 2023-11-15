@@ -114,17 +114,9 @@ describe("GET /activerequests/users/:id", () => {
       .get("/activerequests/users/2")
       .set("authorization", u1Token);
     expect(resp.statusCode).toEqual(200);
+    console.log(resp.body);
     expect(resp.body).toEqual({
       activeRequests: [
-        {
-          id: 1,
-          amtRequested: "5000",
-          purpose: "Car",
-          appOpenDate: expect.any(String),
-          interestRate: "0.084",
-          term: 24,
-          installmentAmt: "226.14",
-        },
         {
           id: 2,
           amtRequested: "10000",
@@ -133,6 +125,15 @@ describe("GET /activerequests/users/:id", () => {
           interestRate: "0.094",
           term: 36,
           installmentAmt: "319.86",
+        },
+        {
+          id: 1,
+          amtRequested: "5000",
+          purpose: "Car",
+          appOpenDate: expect.any(String),
+          interestRate: "0.084",
+          term: 24,
+          installmentAmt: "226.14",
         },
       ],
     });
@@ -145,15 +146,6 @@ describe("GET /activerequests/users/:id", () => {
     expect(resp.body).toEqual({
       activeRequests: [
         {
-          id: 1,
-          amtRequested: "5000",
-          purpose: "Car",
-          appOpenDate: expect.any(String),
-          interestRate: "0.084",
-          term: 24,
-          installmentAmt: "226.14",
-        },
-        {
           id: 2,
           amtRequested: "10000",
           purpose: "Education",
@@ -162,14 +154,17 @@ describe("GET /activerequests/users/:id", () => {
           term: 36,
           installmentAmt: "319.86",
         },
+        {
+          id: 1,
+          amtRequested: "5000",
+          purpose: "Car",
+          appOpenDate: expect.any(String),
+          interestRate: "0.084",
+          term: 24,
+          installmentAmt: "226.14",
+        },
       ],
     });
-  });
-  test("unauth for incorrect user", async () => {
-    const resp = await request(app)
-      .get("/activerequests/users/2")
-      .set("authorization", i1Token);
-    expect(resp.statusCode).toEqual(401);
   });
   test("unauth for non user", async () => {
     const resp = await request(app).get("/activerequests/users/2");

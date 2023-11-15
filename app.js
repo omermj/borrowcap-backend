@@ -24,7 +24,7 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("tiny"));
 app.use(authenticateJWT); // this middleware looks for a token in the req header
-// and if it finds it, it passes the signed user details to the next middeware
+// and if it finds it, it passes the signed user details to the next middleware
 
 // routes
 app.use("/users", userRoutes);

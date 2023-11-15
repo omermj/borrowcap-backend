@@ -138,11 +138,17 @@ describe("GET /approvedrequests/:id", () => {
       },
     });
   });
-  test("unauth for non-admin user", async () => {
+  test("works for correct borrower", async () => {
     const resp = await request(app)
       .get("/approvedrequests/3")
       .set("authorization", b1Token);
-    expect(resp.statusCode).toEqual(401);
+    expect(resp.statusCode).toEqual(200);
+  });
+  test("works for investor", async () => {
+    const resp = await request(app)
+      .get("/approvedrequests/3")
+      .set("authorization", i1Token);
+    expect(resp.statusCode).toEqual(200);
   });
   test("unauth for non user", async () => {
     const resp = await request(app).get("/approvedrequests/3");
@@ -205,14 +211,14 @@ describe("PATCH /approvedrequests/:appId/enablefunding", () => {
       .set("authorization", i1Token);
     expect(resp.statusCode).toEqual(401);
   });
-  test("unauth for unauthorized user", async () => {
+  test("unauth for non-user", async () => {
     const resp = await request(app).patch("/approvedrequests/3/enablefunding");
     expect(resp.statusCode).toEqual(401);
   });
 });
 
 describe("PATCH /approvedrequests/:appId/fund", () => {
-  test("partially fund - works for logged in user", async () => {
+  test("partially fund - works for investor", async () => {
     await ApprovedRequest.enableFunding(3);
     const resp = await request(app)
       .patch("/approvedrequests/3/fund")
@@ -223,7 +229,7 @@ describe("PATCH /approvedrequests/:appId/fund", () => {
     const approvedRequest = await ApprovedRequest.get(3);
     expect(approvedRequest.amtFunded).toEqual("5000");
   });
-  test("fully fund - works for logged in user", async () => {
+  test("fully fund - works for investor", async () => {
     await ApprovedRequest.enableFunding(3);
     const resp = await request(app)
       .patch("/approvedrequests/3/fund")
@@ -280,10 +286,10 @@ describe("PATCH /approvedrequests/:appId/fund", () => {
 });
 
 describe("GET /approvedrequests/users/:userId", () => {
-  test("works for admin", async () => {
+  test("works for correct user", async () => {
     const resp = await request(app)
       .get("/approvedrequests/users/2")
-      .set("authorization", u1Token);
+      .set("authorization", b1Token);
     expect(resp.statusCode).toEqual(200);
     expect(resp.body).toEqual({
       approvedRequests: {
@@ -326,12 +332,6 @@ describe("GET /approvedrequests/users/:userId", () => {
       .set("authorization", b1Token);
     expect(resp.statusCode).toEqual(200);
   });
-  test("unauth for unauthorized user", async () => {
-    const resp = await request(app)
-      .get("/approvedrequests/users/2")
-      .set("authorization", i1Token);
-    expect(resp.statusCode).toEqual(401);
-  });
   test("unauth for non-user", async () => {
     const resp = await request(app).get("/approvedrequests/users/2");
     expect(resp.statusCode).toEqual(401);
@@ -340,6 +340,6 @@ describe("GET /approvedrequests/users/:userId", () => {
     const resp = await request(app)
       .get("/approvedrequests/users/200")
       .set("authorization", b1Token);
-    expect(resp.statusCode).toEqual(401);
+    expect(resp.statusCode).toEqual(404);
   });
 });

@@ -34,18 +34,21 @@ router.get("/:appId", ensureLoggedIn, async (req, res, next) => {
 });
 
 /** Given id, pay installment of a funded loan */
-router.patch("/:appId/payinstallment", async (req, res, next) => {
-  try {
-    await ensureCorrectBorrower(req, res, next);
-    const fundedLoan = await FundedLoan.payInstallment(req.params.appId);
-    return res.json({ fundedLoan });
-  } catch (e) {
-    return next(e);
+router.patch(
+  "/:appId/payinstallment",
+  ensureLoggedIn,
+  async (req, res, next) => {
+    try {
+      const fundedLoan = await FundedLoan.payInstallment(req.params.appId);
+      return res.json({ fundedLoan });
+    } catch (e) {
+      return next(e);
+    }
   }
-});
+);
 
 /** Get Funded Loans for User (Borrower and Investor) */
-router.get("/:appId/users", async (req, res, next) => {
+router.get("/:appId/users", ensureLoggedIn, async (req, res, next) => {
   try {
     const fundedLoans = await FundedLoan.getFundedLoansByUserId(
       req.params.appId

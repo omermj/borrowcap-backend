@@ -12,9 +12,12 @@ const ActiveRequest = require("../models/activeRequest");
 const User = require("../models/user");
 const {
   ensureAdmin,
-  ensureAuthorizedUserOrAdmin,
+  ensureAdminOrLoggedIn,
   ensureAuthorizedUser,
   ensureLoggedIn,
+  isCorrectBorrower,
+  isCorrectInvestor,
+  isInvestor,
 } = require("../middleware/auth");
 
 const router = express.Router();
@@ -40,18 +43,14 @@ router.get("/:id", ensureAdmin, async (req, res, next) => {
 });
 
 /** Get all activeRequest given BorrowerId */
-router.get(
-  "/users/:id",
-  ensureAuthorizedUserOrAdmin,
-  async (req, res, next) => {
-    try {
-      const activeRequests = await ActiveRequest.getByBorrowerId(req.params.id);
-      return res.json({ activeRequests });
-    } catch (e) {
-      return next(e);
-    }
+router.get("/users/:id", ensureLoggedIn, async (req, res, next) => {
+  try {
+    const activeRequests = await ActiveRequest.getByBorrowerId(req.params.id);
+    return res.json({ activeRequests });
+  } catch (e) {
+    return next(e);
   }
-);
+});
 
 /** Create new activeRequest */
 router.post("/", ensureLoggedIn, async (req, res, next) => {

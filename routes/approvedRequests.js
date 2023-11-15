@@ -12,11 +12,10 @@ const ApprovedRequest = require("../models/approvedRequest");
 const User = require("../models/user");
 const {
   ensureAdmin,
-  ensureAuthorizedUserOrAdmin,
-  ensureAuthorizedUser,
+  ensureAdminOrLoggedIn,
   ensureLoggedIn,
-  ensureCorrectBorrower,
-  ensureAdminOrCorrectBorrower,
+  isCorrectBorrower,
+  isInvestor,
 } = require("../middleware/auth");
 
 const router = express.Router();
@@ -43,8 +42,14 @@ router.get("/available", ensureLoggedIn, async (req, res, next) => {
 });
 
 /** Given id, return approved request data */
-router.get("/:appId", ensureAdmin, async (req, res, next) => {
+router.get("/:appId", ensureLoggedIn, async (req, res, next) => {
   try {
+    const authorization =
+      res.locals.user.isAdmin ||
+      (await isCorrectBorrower(res.locals.user.id, req.params.appId)) ||
+      (await isInvestor(res.locals.user.id));
+    if (!authorization) throw new UnauthorizedError("Invalid user");
+
     const approvedRequest = await ApprovedRequest.get(req.params.appId);
     return res.json({ approvedRequest });
   } catch (e) {
@@ -53,9 +58,12 @@ router.get("/:appId", ensureAdmin, async (req, res, next) => {
 });
 
 /** Given id, cancel approved request */
-router.delete("/:appId/cancel", async (req, res, next) => {
+router.delete("/:appId/cancel", ensureLoggedIn, async (req, res, next) => {
   try {
-    await ensureAdminOrCorrectBorrower(req, res, next);
+    const authorization =
+      res.locals.user.isAdmin ||
+      (await isCorrectBorrower(res.locals.user.id, req.params.appId));
+    if (!authorization) throw new UnauthorizedError("Invalid user");
 
     const cancelledRequest = await ApprovedRequest.cancel(req.params.appId, 3);
     return res.json({ message: cancelledRequest });
@@ -65,20 +73,31 @@ router.delete("/:appId/cancel", async (req, res, next) => {
 });
 
 /** Given id, enable funding to approved request */
-router.patch("/:appId/enablefunding", async (req, res, next) => {
-  try {
-    await ensureCorrectBorrower(req, res, next);
+router.patch(
+  "/:appId/enablefunding",
+  ensureLoggedIn,
+  async (req, res, next) => {
+    try {
+      const authorization = await isCorrectBorrower(
+        res.locals.user.id,
+        req.params.appId
+      );
+      if (!authorization) throw new UnauthorizedError("Invalid user");
 
-    const result = await ApprovedRequest.enableFunding(req.params.appId);
-    return res.json({ message: "Funding enabled." });
-  } catch (e) {
-    return next(e);
+      const result = await ApprovedRequest.enableFunding(req.params.appId);
+      return res.json({ message: "Funding enabled." });
+    } catch (e) {
+      return next(e);
+    }
   }
-});
+);
 
 /** Add funding pledge to an approved request */
 router.patch("/:appId/fund", ensureLoggedIn, async (req, res, next) => {
   try {
+    const authorization = await isInvestor(res.locals.user.id);
+    if (!authorization) throw new UnauthorizedError("Invalid user");
+
     if (!req.body.amount) throw new BadRequestError("Amount is required");
 
     const user = await User.get(res.locals.user.id);
@@ -100,18 +119,15 @@ router.patch("/:appId/fund", ensureLoggedIn, async (req, res, next) => {
 });
 
 /** Get Approved Requests for User */
-router.get(
-  "/users/:userId",
-  ensureAuthorizedUserOrAdmin,
-  async (req, res, next) => {
-    try {
-      const approvedRequests =
-        await ApprovedRequest.getApprovedRequestsByUserId(req.params.userId);
-      return res.json({ approvedRequests });
-    } catch (e) {
-      return next(e);
-    }
+router.get("/users/:userId", ensureLoggedIn, async (req, res, next) => {
+  try {
+    const approvedRequests = await ApprovedRequest.getApprovedRequestsByUserId(
+      req.params.userId
+    );
+    return res.json({ approvedRequests });
+  } catch (e) {
+    return next(e);
   }
-);
+});
 
 module.exports = router;

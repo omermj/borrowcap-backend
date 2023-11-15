@@ -7,7 +7,7 @@ const changePasswordSchema = require("../schemas/changePassword.json");
 const { BadRequestError } = require("../expressError");
 const {
   ensureAdmin,
-  ensureAuthorizedUserOrAdmin,
+  ensureAdminOrLoggedIn,
   ensureAuthorizedUser,
 } = require("../middleware/auth");
 
@@ -25,18 +25,14 @@ router.get("/", ensureAdmin, async (req, res, next) => {
 });
 
 /** Get a single user from database */
-router.get(
-  "/:username",
-  ensureAuthorizedUserOrAdmin,
-  async (req, res, next) => {
-    try {
-      const user = await User.getByUsername(req.params.username);
-      return res.json({ user });
-    } catch (e) {
-      return next(e);
-    }
+router.get("/:username", ensureAdminOrLoggedIn, async (req, res, next) => {
+  try {
+    const user = await User.getByUsername(req.params.username);
+    return res.json({ user });
+  } catch (e) {
+    return next(e);
   }
-);
+});
 
 /** Add new user in database. Only for admins. */
 //ensureAdmin
@@ -65,29 +61,25 @@ router.delete("/:id", ensureAdmin, async (req, res, next) => {
 });
 
 /** Update user information in database. Not used to update password */
-router.patch(
-  "/:username",
-  ensureAuthorizedUserOrAdmin,
-  async (req, res, next) => {
-    try {
-      if (req.body.password) delete req.body.password;
-      const validator = jsonschema.validate(req.body, userUpdateSchema);
-      if (!validator.valid) {
-        const errs = validator.errors.map((e) => e.stack);
-        throw new BadRequestError(errs);
-      }
-      const user = await User.update(req.params.username, req.body);
-      return res.json({ user });
-    } catch (e) {
-      return next(e);
+router.patch("/:username", ensureAdminOrLoggedIn, async (req, res, next) => {
+  try {
+    if (req.body.password) delete req.body.password;
+    const validator = jsonschema.validate(req.body, userUpdateSchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map((e) => e.stack);
+      throw new BadRequestError(errs);
     }
+    const user = await User.update(req.params.username, req.body);
+    return res.json({ user });
+  } catch (e) {
+    return next(e);
   }
-);
+});
 
 /** Update user password */
 router.patch(
   "/:username/changepassword",
-  ensureAuthorizedUserOrAdmin,
+  ensureAdminOrLoggedIn,
   async (req, res, next) => {
     try {
       const validator = jsonschema.validate(req.body, changePasswordSchema);

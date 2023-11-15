@@ -7,7 +7,7 @@ const { BadRequestError, NotFoundError } = require("../expressError");
 const CancelledRequest = require("../models/cancelledRequest");
 const {
   ensureAdmin,
-  ensureAuthorizedUserOrAdmin,
+  ensureAdminOrLoggedIn,
   ensureAuthorizedUser,
   ensureLoggedIn,
 } = require("../middleware/auth");

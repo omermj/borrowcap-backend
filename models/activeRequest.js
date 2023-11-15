@@ -133,7 +133,8 @@ class ActiveRequest {
         r.installment_amt as "installmentAmt"
       FROM active_requests AS "r"
       JOIN purpose AS "p" ON p.id = r.purpose_id
-      WHERE r.borrower_id = $1`,
+      WHERE r.borrower_id = $1
+      ORDER BY r.app_open_date DESC`,
       [id]
     );
     return result.rows;
