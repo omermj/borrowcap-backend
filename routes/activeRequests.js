@@ -10,15 +10,7 @@ const approveLoanSchema = require("../schemas/approveLoanRequest.json");
 const { BadRequestError } = require("../expressError");
 const ActiveRequest = require("../models/activeRequest");
 const User = require("../models/user");
-const {
-  ensureAdmin,
-  ensureAdminOrLoggedIn,
-  ensureAuthorizedUser,
-  ensureLoggedIn,
-  isCorrectBorrower,
-  isCorrectInvestor,
-  isInvestor,
-} = require("../middleware/auth");
+const { ensureAdmin, ensureLoggedIn } = require("../middleware/auth");
 
 const router = express.Router();
 

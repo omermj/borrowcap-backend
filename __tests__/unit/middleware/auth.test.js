@@ -8,15 +8,7 @@ const {
   commonBeforeAll,
   commonBeforeEach,
 } = require("./_testCommon.js");
-const {
-  authenticateJWT,
-  ensureAuthorizedUser,
-  ensureLoggedIn,
-  ensureAdmin,
-  ensureAdminOrLoggedIn,
-  ensureCorrectBorrower,
-  ensureAdminOrCorrectBorrower,
-} = require("../../../middleware/auth");
+const { authenticateJWT } = require("../../../middleware/auth");
 const { SECRET_KEY } = require("../../../config");
 
 beforeAll(commonBeforeAll);

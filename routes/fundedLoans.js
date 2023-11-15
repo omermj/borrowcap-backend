@@ -3,13 +3,8 @@
 /** Routes for Funded Loans */
 
 const express = require("express");
-const { BadRequestError, NotFoundError } = require("../expressError");
 const FundedLoan = require("../models/fundedLoan");
-const {
-  ensureAdmin,
-  ensureLoggedIn,
-  ensureCorrectBorrower,
-} = require("../middleware/auth");
+const { ensureAdmin, ensureLoggedIn } = require("../middleware/auth");
 
 const router = express.Router();
 
