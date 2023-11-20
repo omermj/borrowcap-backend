@@ -4,7 +4,7 @@ require("dotenv").config();
 
 /** Config file for app */
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 const BCRYPT_WORK_FACTOR = process.env.NODE_ENV === "test" ? 1 : 12;
 const DB_NAME =
