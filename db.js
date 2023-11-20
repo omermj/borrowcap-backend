@@ -1,14 +1,14 @@
 "use strict";
 
 const pg = require("pg");
-const { DB_NAME } = require("./config");
+const { DB_NAME, DB_USER, DB_HOST, DB_PASSWORD, DB_PORT } = require("./config");
 
 const db = new pg.Client({
-  user: "postgres",
-  host: "localhost",
+  user: DB_USER, // "postgres",
+  host: DB_HOST, // "localhost",
   database: DB_NAME,
-  password: "postgres",
-  port: 5432,
+  password: DB_PASSWORD, //"postgres",
+  port: DB_PORT, // 5432,
 });
 
 db.connect();
