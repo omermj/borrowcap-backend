@@ -79,8 +79,6 @@ class CancelledRequest {
         cancellationReasonId,
       ]
     );
-    // const test = await this.get(5);
-    // console.log("test", test);
     return result.rows[0];
   }
 

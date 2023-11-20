@@ -87,15 +87,6 @@ describe("getByBorrowerId", () => {
     const activeRequests = await ActiveRequest.getByBorrowerId(2);
     await expect(activeRequests).toEqual([
       {
-        id: 1,
-        amtRequested: "5000",
-        purpose: "Car",
-        appOpenDate: new Date("2023/09/27"),
-        interestRate: "0.084",
-        term: 24,
-        installmentAmt: "226.14",
-      },
-      {
         id: 2,
         amtRequested: "10000",
         purpose: "Education",
@@ -103,6 +94,15 @@ describe("getByBorrowerId", () => {
         interestRate: "0.094",
         term: 36,
         installmentAmt: "319.86",
+      },
+      {
+        id: 1,
+        amtRequested: "5000",
+        purpose: "Car",
+        appOpenDate: new Date("2023/09/27"),
+        interestRate: "0.084",
+        term: 24,
+        installmentAmt: "226.14",
       },
     ]);
   });

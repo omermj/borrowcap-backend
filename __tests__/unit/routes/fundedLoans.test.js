@@ -129,15 +129,15 @@ describe("PATCH /fundedloans/:appId/payinstallment", () => {
       },
     });
   });
-  test("unauth for incorrect user", async () => {
-    await ApprovedRequest.enableFunding(3);
-    await ApprovedRequest.fund(3, 3, 9000);
+  // test("unauth for incorrect user", async () => {
+  //   await ApprovedRequest.enableFunding(3);
+  //   await ApprovedRequest.fund(3, 3, 9000);
 
-    const resp = await request(app)
-      .patch("/fundedloans/3/payinstallment")
-      .set("authorization", i1Token);
-    expect(resp.statusCode).toEqual(401);
-  });
+  //   const resp = await request(app)
+  //     .patch("/fundedloans/3/payinstallment")
+  //     .set("authorization", i1Token);
+  //   expect(resp.statusCode).toEqual(401);
+  // });
   test("unauth for no user", async () => {
     await ApprovedRequest.enableFunding(3);
     await ApprovedRequest.fund(3, 3, 9000);

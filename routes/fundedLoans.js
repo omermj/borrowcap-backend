@@ -4,7 +4,11 @@
 
 const express = require("express");
 const FundedLoan = require("../models/fundedLoan");
-const { ensureAdmin, ensureLoggedIn } = require("../middleware/auth");
+const {
+  ensureAdmin,
+  ensureLoggedIn,
+  ensureCorrectUser,
+} = require("../middleware/auth");
 
 const router = express.Router();
 

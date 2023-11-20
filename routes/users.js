@@ -9,6 +9,7 @@ const {
   ensureAdmin,
   ensureAdminOrLoggedIn,
   ensureLoggedIn,
+  ensureCorrectUser,
 } = require("../middleware/auth");
 
 const router = express.Router();
@@ -100,7 +101,7 @@ router.patch(
 );
 
 /** Deposit Funds in User's Account Balance */
-router.patch("/:id/deposit", ensureLoggedIn, async (req, res, next) => {
+router.patch("/:id/deposit", ensureCorrectUser, async (req, res, next) => {
   try {
     if (!req.body.amount) throw new BadRequestError("Amount is required.");
     const accountBalance = await User.depositFunds(
@@ -114,7 +115,7 @@ router.patch("/:id/deposit", ensureLoggedIn, async (req, res, next) => {
 });
 
 /** Withdraw Funds from User's Account Balance */
-router.patch("/:id/withdraw", ensureLoggedIn, async (req, res, next) => {
+router.patch("/:id/withdraw", ensureCorrectUser, async (req, res, next) => {
   try {
     if (!req.body.amount) throw new BadRequestError("Amount is required.");
     const accountBalance = await User.withdrawFunds(

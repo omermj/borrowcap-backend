@@ -114,7 +114,6 @@ describe("GET /activerequests/users/:id", () => {
       .get("/activerequests/users/2")
       .set("authorization", u1Token);
     expect(resp.statusCode).toEqual(200);
-    console.log(resp.body);
     expect(resp.body).toEqual({
       activeRequests: [
         {
