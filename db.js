@@ -9,14 +9,17 @@ const db = new pg.Client({
   database: DB_NAME,
   password: DB_PASSWORD,
   port: DB_PORT,
-  // ssl: {
-  //   rejectUnauthorized: false, // process.env.NODE_ENV === "production" ? false : true,
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : null,
+  // rejectUnauthorized: false, // process.env.NODE_ENV === "production" ? false : true,
   // },
 });
 
-process.env.NODE_ENV === "production"
-  ? (db.ssl.rejectUnauthorized = false)
-  : null;
+// process.env.NODE_ENV === "production"
+//   ? (db.ssl.rejectUnauthorized = false)
+//   : null;
 
 db.connect();
 
