@@ -14,6 +14,7 @@ const rolesRoutes = require("./routes/roles");
 const purposeRoutes = require("./routes/purposes");
 const termRoutes = require("./routes/terms");
 const cancelledRequestRoutes = require("./routes/cancelledRequests");
+const path = require("path");
 const { ExpressError, NotFoundError } = require("./expressError");
 const { authenticateJWT } = require("./middleware/auth");
 
@@ -36,6 +37,11 @@ app.use("/roles", rolesRoutes);
 app.use("/purposes", purposeRoutes);
 app.use("/terms", termRoutes);
 app.use("/cancelledrequests", cancelledRequestRoutes);
+app.use(express.static(path.join(__dirname, "build")));
+
+app.get("/*", function (req, res) {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
 
 /** Handle 404 errors */
 app.use(function (req, res, next) {
