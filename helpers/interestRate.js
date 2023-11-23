@@ -28,7 +28,9 @@ async function getBondYields() {
 async function getBillYields() {
   const response = await axios.get(BASE_URL_BILLS);
   const data = response.data.observations;
-  const lastDay = data[data.length - 1];
+  const lastDay = data[data.length - 2];
+
+  console.log(lastDay);
 
   return {
     1: +lastDay["V80691342"].v,
