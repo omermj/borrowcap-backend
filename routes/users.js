@@ -128,4 +128,14 @@ router.patch("/:id/withdraw", ensureCorrectUser, async (req, res, next) => {
   }
 });
 
+/** Get User Statistics */
+router.get("/:id/stats", ensureCorrectUser, async (req, res, next) => {
+  try {
+    const stats = await User.getStats(req.params.id);
+    return res.json({ stats });
+  } catch (e) {
+    return next(e);
+  }
+});
+
 module.exports = router;

@@ -168,9 +168,11 @@ class User {
     const user = result.rows[0];
     if (!user) throw new NotFoundError(`No user with username: ${username}`);
 
-    // get roles from database
+    // get roles and statistics from database
     const roles = await User.getRoles(user.id);
-
+    // const fundedLoansBalanceAndInstallments =
+    //   await User.getFundedLoansBalanceAndInstallments(user.id);
+    // const approvedLoansBalance = await User.getApprovedLoansBalance(user.id);
     return { ...user, roles };
   }
 
@@ -279,8 +281,9 @@ class User {
       if (isValid) {
         delete user.password;
 
-        // get roles from database
+        // get roles and statistics from database
         const roles = await User.getRoles(user.id);
+
         return { ...user, roles };
       }
     }
@@ -380,6 +383,90 @@ class User {
       [updatedAccountBalance, id]
     );
     return result.rows[0];
+  }
+
+  /** Get total funded loans balance for user */
+  static async getFundedLoansBalanceAndInstallments(id) {
+    // Check if id exists
+    const user = await User.get(id);
+    if (!user) throw new NotFoundError(`No user with id: ${id}`);
+
+    const result = await db.query(
+      `
+      SELECT COALESCE(SUM(remaining_balance),0) AS "totalRemainingBalance", 
+        COALESCE(SUM(installment_amt), 0) AS "totalInstallment"
+      FROM funded_loans
+      WHERE borrower_id = $1
+    `,
+      [id]
+    );
+    return result.rows[0];
+  }
+
+  /** Get total approved loans balance for user */
+  static async getApprovedLoansBalance(id) {
+    // Check if id exists
+    const user = await User.get(id);
+    if (!user) throw new NotFoundError(`No user with id: ${id}`);
+
+    const result = await db.query(
+      `
+      SELECT SUM(amt_approved) AS "totalAmtApproved"
+      FROM approved_requests
+      WHERE borrower_id = $1
+    `,
+      [id]
+    );
+    return result.rows[0] || { totalAmtApproved: 0 };
+  }
+
+  /** Get total funded loans balance for investor */
+  static async getFundedLoansForInvestor(id) {
+    // Check if id exists
+    const user = await User.get(id);
+    if (!user) throw new NotFoundError(`No user with id: ${id}`);
+
+    const result = await db.query(
+      `
+    SELECT 
+      COALESCE(SUM(fl.remaining_balance * fli.invested_amt / fl.amt_funded), 0) 
+        AS "investments",
+      COALESCE(SUM(fl.installment_amt * fli.invested_amt / fl.amt_funded), 0) 
+        AS "monthlyInflows",
+      COALESCE(SUM(fl.interest_rate * fli.invested_amt) / 
+        NULLIF(SUM(fli.invested_amt), 0), 0) AS "avgReturns"
+      FROM funded_loans AS fl
+      JOIN funded_loans_investors AS fli ON fl.id = fli.loan_id
+      WHERE fli.investor_id = $1
+    `,
+      [id]
+    );
+    return result.rows[0];
+  }
+
+  /** Get user statistics */
+  static async getStats(id) {
+    // Check if id exists
+    const user = await User.get(id);
+    if (!user) throw new NotFoundError(`No user with id: ${id}`);
+
+    // if borrower, get funded loans balance, installments and approved loans
+    // balance
+    if (user.roles.includes("borrower")) {
+      const fundedLoansBalanceAndInstallments =
+        await User.getFundedLoansBalanceAndInstallments(id);
+      const approvedLoansBalance = await User.getApprovedLoansBalance(id);
+      return {
+        ...fundedLoansBalanceAndInstallments,
+        ...approvedLoansBalance,
+      };
+    } else if (user.roles.includes("investor")) {
+      // if investor, invested amount, monthly inflows and average returns
+      const fundedLoans = await User.getFundedLoansForInvestor(id);
+      return fundedLoans;
+    } else {
+      throw new BadRequestError("User has to be an investor or borrower.");
+    }
   }
 }
 

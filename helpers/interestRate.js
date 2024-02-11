@@ -30,7 +30,7 @@ async function getBillYields() {
   const data = response.data.observations;
   const lastDay = data[data.length - 2];
 
-  console.log(lastDay);
+  console.log("lastDay:", lastDay);
 
   return {
     1: +lastDay["V80691342"].v,
@@ -45,5 +45,7 @@ async function getInterestRates() {
   const bills = await getBillYields();
   return { ...bonds, ...bills };
 }
+
+// console.log(getBillYields().then(console.log));
 
 module.exports = { getInterestRates };

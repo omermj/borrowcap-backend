@@ -47,10 +47,10 @@ router.patch(
 );
 
 /** Get Funded Loans for User (Borrower and Investor) */
-router.get("/:appId/users", ensureLoggedIn, async (req, res, next) => {
+router.get("/:userId/users", ensureLoggedIn, async (req, res, next) => {
   try {
     const fundedLoans = await FundedLoan.getFundedLoansByUserId(
-      req.params.appId
+      req.params.userId
     );
     return res.json({ fundedLoans });
   } catch (e) {

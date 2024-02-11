@@ -302,11 +302,10 @@ class ApprovedRequest {
       });
       // create fundedLoan
       const fundedLoan = await FundedLoan.create(updatedApprovedRequest);
-    }
 
-    // Remove relationship between approved_request and investors as request is
-    // funded
-    // ApprovedRequest.removeRelationApprovedRequestInvestors(appId);
+      // Remove relation between approved_request & investors as request is funded
+      ApprovedRequest.removeRelationApprovedRequestInvestors(appId);
+    }
 
     return updatedApprovedRequest;
   }
@@ -321,33 +320,61 @@ class ApprovedRequest {
     const investor = await User.get(investorId);
     if (!investor) throw new NotFoundError("Incorrect investor id");
 
-    const result = await db.query(
-      `INSERT INTO approved_requests_investors
+    // check if investor has already pledged for the request
+    const existingPledge = await db.query(
+      `
+      SELECT * FROM approved_requests_investors
+      WHERE request_id = $1 AND investor_id = $2
+      `,
+      [appId, investorId]
+    );
+    // if already pledged, update the pledge amount
+    if (existingPledge.rows[0]) {
+      const newPledgedAmt = +existingPledge.rows[0].pledged_amt + amount;
+      const result = await db.query(
+        `
+        UPDATE approved_requests_investors
+        SET pledged_amt = $1
+        WHERE request_id = $2 AND investor_id = $3
+        RETURNING
+          request_id AS "requestId",
+          investor_id AS "investorId",
+          pledged_amt AS "pledgedAmt"
+        `,
+        [newPledgedAmt, appId, investorId]
+      );
+      if (!result.rows[0]) throw new ExpressError("Error updating database");
+      return result.rows[0];
+    } else {
+      // add investor pledge in database if not already pledged
+      const result = await db.query(
+        `INSERT INTO approved_requests_investors
         (request_id, investor_id, pledged_amt)
         VALUES ($1, $2, $3)
         RETURNING
           request_id AS "requestId",
           investor_id AS "investorId",
           pledged_amt AS "pledgedAmt"`,
-      [appId, investorId, amount]
-    );
-    if (!result.rows[0]) throw new ExpressError("Error updating database");
-    return result.rows[0];
+        [appId, investorId, amount]
+      );
+      if (!result.rows[0]) throw new ExpressError("Error updating database");
+      return result.rows[0];
+    }
   }
 
-  // static async removeRelationApprovedRequestInvestors(appId) {
-  //   const result = await db.query(
-  //     `
-  //     DELETE
-  //       FROM approved_requests_investors
-  //       WHERE request_id = $1
-  //       RETURNING request_id
-  //   `,
-  //     [appId]
-  //   );
-  //   const id = result.rows[0];
-  //   if (!id) new NotFoundError(`No request with id: ${appId}`);
-  // }
+  static async removeRelationApprovedRequestInvestors(appId) {
+    const result = await db.query(
+      `
+      DELETE
+        FROM approved_requests_investors
+        WHERE request_id = $1
+        RETURNING request_id
+    `,
+      [appId]
+    );
+    const id = result.rows[0];
+    if (!id) new NotFoundError(`No request with id: ${appId}`);
+  }
 
   /** Get Approved Requests which are available for investment */
   static async getAvailableForInvestment() {
